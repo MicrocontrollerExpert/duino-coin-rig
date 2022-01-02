@@ -13,8 +13,9 @@
 #define WIRE_CLOCK 100000   // The speed
 
 #define ID_MIN 1            // The first possible address
-#define ID_MAX 127          // The last possible address
+#define ID_MAX 50           // The last possible address
 
+#define PREFIX_UNKNOWN 'U'  // The prefix for status UNKNOWN (Slave is in an unknown state)
 #define PREFIX_FREE 'F'     // The prefix for status FREE (Slave is free for the next job)
 #define PREFIX_WORKING 'W'  // The prefix for status WORKING (Slave is working on a job)
 #define PREFIX_READY 'R'    // The prefix for status READY (Slave is ready with a job and has a result)
@@ -53,12 +54,18 @@ void wireInit() {
  * Searches for existing slaves
  */
 void slavesScan() {
+  setState(MASTER_STATE_SCANNING);
+  logMessage("Start scanning for slaves");
+  int counter = 0;
   for (byte id=ID_MIN ; id<=ID_MAX ; id++) {
     if (slaveExists(id)) {
-      logMessage("Slave found with ID: " + id);
+      logMessage("Slave found with ID: " + String(id));
       String text = slaveRequestLn(id);
+      counter++;
     }
   }
+  cores_sum = counter;
+  logMessage("Found "+String(counter)+" slave(s)");
 }
 
 /**

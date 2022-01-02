@@ -91,6 +91,7 @@ void sdCardReadConfigFile() {
   } else if (!sdCardConfigFileExists()) {
     logMessage("No config file 'config.rig' found on SD card");
   } else {
+    setState(MASTER_STATE_LOADING_CONFIG);
     logMessage("Loading config file 'config.rig'");
     while ((n = file.fgets(line, sizeof(line))) > 0) {
       config = String(line);
@@ -117,16 +118,18 @@ void sdCardReadConfigFile() {
         serverMainName = config.substring(17);
         logMessage("Config for main server name loaded");
       } else if (config.substring(0, 17) == "server_pool_host=") {
-        serverPoolHost = config.substring(17);
-        logMessage("Config for pool server host loaded");
+        serverPoolRequestHost = config.substring(17);
+        serverPoolRequestHost = "server.duinocoin.com";
+        logMessage("Config for pool request server host loaded");
       } else if (config.substring(0, 17) == "server_pool_port=") {
-        serverPoolPort = config.substring(17);
-        logMessage("Config for pool server port loaded");
+        serverPoolRequestPort = config.substring(17);
+        logMessage("Config for pool request server port loaded");
       } else if (config.substring(0, 17) == "server_pool_name=") {
-        serverPoolName = config.substring(17);
-        logMessage("Config for pool server name loaded");
+        serverPoolRequestName = config.substring(17);
+        logMessage("Config for pool request server name loaded");
       }
     }
+    setState(MASTER_STATE_CONFIG_LOADED);
     logMessage("Config file 'config.rig' loaded");
   }
 }

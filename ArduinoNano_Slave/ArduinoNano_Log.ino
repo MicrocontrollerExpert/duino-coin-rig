@@ -1,13 +1,13 @@
 /*
  * Project: DuinoCoinRig
- * File:    ESP8266_Log
+ * File:    ArduinoNano_Log
  * Version: 0.1
  * Purpose: Central log management
  * Author:  Frank Niggemann
  */
 
 bool logSerial = true;
-bool logSdCard = true;
+bool logI2C = false;
 
 /**
  * Initializes the log part of the software
@@ -26,8 +26,8 @@ void logMessage(String message) {
   if (logSerial) {
     logMessageSerial(message);
   }
-  if (logSdCard) {
-    logMessageSdCard(message);
+  if (logI2C) {
+    logMessageI2C(message);
   }
 }
 
@@ -39,8 +39,8 @@ void logMessageSerial(String message) {
 }
 
 /**
- * Writes the log message to the SD card
+ * Writes the log message to the I2C bus
  */
-void logMessageSdCard(String message) {
-  // ToDo
+void logMessageI2C(String message) {
+  // Maybe later ...
 }

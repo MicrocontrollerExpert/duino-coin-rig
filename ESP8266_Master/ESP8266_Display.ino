@@ -29,6 +29,7 @@ void displaySetup() {
   display.displayOn();
   display.setContrast(255);
   display.setI2cAutoInit(true);
+  displayClear();
   displayScreenHome();
 }
 
@@ -47,16 +48,27 @@ void displayClear() {
 void displayScreenHome() {
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_LEFT);
-  if (!wifiConnected()) {
-    if (!sdCardReady()) {
-      display.drawString(0, 0, "No SD card found!");
-    } else {
-      display.drawString(0, 0, softwareName+softwareVersion+"\nConfig: "+configStatus+"\nWiFi: "+wifiGetIp());
-    }
+  String text = "";
+  if (masterState == MASTER_STATE_BOOTING) {
+    text = "Booting";
   } else {
-    display.drawString(0, 0, softwareName+softwareVersion+"\nWiFi: "+wifiGetIp()+"\nPool: "+clientHttpGetPoolString());
+    if (!wifiConnected()) {
+      if (!sdCardReady()) {
+        text = "No SD card found!";
+      } else {
+        text = softwareName+" V"+softwareVersion+"\n";
+        text+= "Config: "+configStatus+"\n";
+        text+= "WiFi: "+wifiGetIp();
+      }
+    } else {
+      text = softwareName+" V"+softwareVersion+"\n";
+      text+= "WiFi: "+wifiGetIp()+"\n";
+      text+= "Pool: "+clientHttpsGetPoolString()+"\n";
+      text+= "Cores: "+String(cores_sum)+" / Online: "+String(cores_online)+"\n";
+      text+= "Good: "+String(jobs_good)+" / Bad: "+String(jobs_bad);
+    }
   }
-  
+  display.drawString(0, 0, text);
   display.display();
   delay(10);
 }

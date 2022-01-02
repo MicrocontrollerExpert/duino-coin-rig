@@ -14,7 +14,7 @@
  * Initializes the HTTP client part of the software
  */
 void clientHttpSetup() {
-  clientHttpRequestPoolConfiguration();
+  
 }
 
 /**
@@ -27,7 +27,8 @@ void clientHttpSetup() {
 String clientHttpGetContent(String url) {
   String content = "";
   WiFiClient client;
-  HTTPClient http;
+  HTTPClient http; 
+  http.setTimeout(30000);
   if (http.begin(client, url))
   {
     int httpCode = http.GET();
@@ -42,33 +43,4 @@ String clientHttpGetContent(String url) {
     http.end();
   }
   return content;
-}
-
-/**
- * Requests a pool configuration from the pool server
- */ 
-void clientHttpRequestPoolConfiguration() {
-  String url = "http://" + serverPoolRequestHost + ":" + serverPoolRequestPort + "/getPool";
-  String content = clientHttpGetContent(url);
-  if (content != "") {
-    DynamicJsonDocument json(1024);
-    deserializeJson(json, content);
-    serverPoolHost = String(json["ip"]);
-    serverPoolPort = String(json["port"]);
-    serverPoolName = String(json["name"]);
-    logMessage("Updated pool configuration to host " + serverPoolHost + " and port " + serverPoolPort);
-  }
-}
-
-/**
- * Returns the pool configuration or 'unknown' as result
- * 
- * @return String The pool configuration or 'unknown'
- */
-String clientHttpGetPoolString() {
-  String pool = "Unknown";
-  if (serverPoolHost != "") {
-    pool = serverPoolHost + ":" + serverPoolPort;
-  }
-  return pool;
 }

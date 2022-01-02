@@ -35,6 +35,8 @@ void clientPoolSetup() {
   }
 }
 
+
+
 /**
  * Returns the connection status of the client with the given ID
  * 
@@ -129,7 +131,7 @@ bool clientPoolSendJobResultForClient(int id) {
  * 
  * @return String Returns the result or an empty string
  */
-bool clientPoolReadJobResultResultForClient(int id) {
+String clientPoolReadJobResultResultForClient(int id) {
   if (!clientPoolClientIsConnected(id)) {
     return "";
   }

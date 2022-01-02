@@ -16,12 +16,14 @@
  */
 void wifiSetup(String ssid, String password) {
   if (ssid!="") {
+    setState(MASTER_STATE_CONNECTING_WIFI);
     logMessage("Connecting to: " + String(ssid));
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid, password);
     while (WiFi.status() != WL_CONNECTED) {
       delay(200);
     }
+    setState(MASTER_STATE_WIFI_CONNECTED);
     logMessage("Connected with IP address: " + wifiGetIp());
   } else {
     logMessage("Can't connect to WiFi without SSID");
