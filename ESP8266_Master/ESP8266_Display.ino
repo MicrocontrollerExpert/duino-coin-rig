@@ -50,21 +50,23 @@ void displayScreenHome() {
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   String text = "";
   if (masterState == MASTER_STATE_BOOTING) {
-    text = "Booting";
+    text = softwareName+" V"+softwareVersion+"\n";
+    text+= "Booting";
   } else {
     if (!wifiConnected()) {
       if (!sdCardReady()) {
-        text = "No SD card found!";
+        text = softwareName+" V"+softwareVersion+"\n";
+        text+= "No SD card found!";
       } else {
         text = softwareName+" V"+softwareVersion+"\n";
         text+= "Config: "+configStatus+"\n";
         text+= "WiFi: "+wifiGetIp();
       }
     } else {
-      text = softwareName+" V"+softwareVersion+"\n";
-      text+= "WiFi: "+wifiGetIp()+"\n";
+      text = "WiFi: "+wifiGetIp()+"\n";
       text+= "Pool: "+clientHttpsGetPoolString()+"\n";
       text+= "Cores: "+String(cores_sum)+" / Online: "+String(cores_online)+"\n";
+      text+= "Jobs: "+String(jobs_sum)+"\n";
       text+= "Good: "+String(jobs_good)+" / Bad: "+String(jobs_bad);
     }
   }

@@ -76,6 +76,7 @@ void loop() {
   if (slaveState == SLAVE_STATE_RESULT_SENT) {
     digitalWrite(PIN_LED_WORKING, LOW);
     digitalWrite(PIN_LED_READY, LOW);
+    setState(SLAVE_STATE_FREE);
   }
   logMessage("Current state: "+String(slaveState));
   delay(500);

@@ -78,7 +78,10 @@ void clientPoolRotateStates() {
       } else if (poolClientState[id] == CLIENT_STATE_JOB_RESULT_SENT_TO_SERVER) {
         clientPoolReadJobResultResultForClient(id);
       } else if (poolClientState[id] == CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER) {
-        poolClientState[id] = CLIENT_STATE_ONLINE;
+        unsigned long poolClientTimeRequestEnd = millis();
+        if ((poolClientTimeRequestEnd - poolClientTimeRequestStart[id]) > 30000) {
+          poolClientState[id] = CLIENT_STATE_ONLINE;
+        }
       } else {
         poolClientState[id] = CLIENT_STATE_UNKNOWN;
       }
@@ -269,6 +272,12 @@ String clientPoolReadJobResultResultForClient(int id) {
   String result = clientPoolGetContentFromClient(id);
   if (result != "") {
     logMessage("Result from server for job from client with ID "+String(id)+": "+result);
+    if (result.substring(0, 3)=="BAD") {
+      jobs_bad++;
+    } else if (result.substring(0, 4)=="GOOD") {
+      jobs_good++;
+    }
+    jobs_sum++;
     setStateClient(id, CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER);
     
   }

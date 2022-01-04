@@ -76,17 +76,49 @@ int jobs_good = 0;                                            // The number of g
 int jobs_bad = 0;                                             // The number of bad jobs
 bool slaveFound[SLAVE_ID_MAX];                                // An array with all possible IDs and the information if there is a slave with this ID
 
-// Methods Logging
-void logSetup();
-void logMessage(String message);
-void logMessageSerial(String message);
-void logMessageSdCard(String message);
-void logMessageWebsite(String message);
+// Methods Master
+void setState(int state);
+
+// Methods Client HTTP
+void clientHttpSetup();
+String clientHttpGetContent(String url);
+
+// Methods Client HTTPS
+void clientHttpsSetup();
+String clientHttpsGetContent(String url);
+void clientHttpsRequestPoolConfiguration();
+String clientHttpsGetPoolString();
+
+// Methods Client Pool
+void clientPoolSetup();
+void clientPoolConnectClients();
+void clientPoolRotateStates();
+void clientPoolLogStates();
+int clientPoolClientsOnline();
+bool clientPoolClientIsConnected(int id);
+bool clientPoolConnectClient(int id);
+bool clientPoolRequestNextJobForClient(int id);
+String clientPoolReadJobRequestResultForClient(int id);
+void clientPoolSendClientJobToSlave(int id);
+String clientPoolRequestClientJobResultFromSlave(int id);
+bool clientPoolSendJobResultForClient(int id);
+String clientPoolReadJobResultResultForClient(int id);
+String clientPoolGetContentFromClient(int id);
+void setStateClient(int id, int state);
 
 // Methods Display
 void displaySetup();
 void displayClear();
 void displayScreenHome();
+
+// Methods Helper
+String splitStringAndGetValue(String data, char separator, int index);
+
+// Methods Logging
+void logSetup();
+void logMessage(String message);
+void logMessageSerial(String message);
+void logMessageSdCard(String message);
 
 // Methods SD-Card
 void sdCardSetup();
