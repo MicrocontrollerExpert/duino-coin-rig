@@ -18,9 +18,9 @@
  *                   Wire
  */
 
-#define PIN_LED_ADDRESS   0
-#define PIN_LED_WORKING   LED_BUILTIN
-#define PIN_LED_READY     LED_BUILTIN
+#define PIN_LED_ADDRESS   13
+#define PIN_LED_WORKING   13
+#define PIN_LED_READY     13
 #define PIN_ANALOG_IN     A1
 
 #define PREFIX_UNKNOWN 'U'      // The prefix for status UNKNOWN (Slave is in an unknown state)
@@ -29,11 +29,13 @@
 #define PREFIX_READY 'R'        // The prefix for status READY (Slave is ready with a job and has a result)
 #define PREFIX_ERROR 'E'        // The prefix for status ERROR (Slave has a problem)
 
-#define SLAVE_STATE_UNKNOWN 0   // The ID for status UNKNOWN (Slave is in an unknown state)
-#define SLAVE_STATE_FREE 1      // The ID for status FREE (Slave is free for the next job)
-#define SLAVE_STATE_WORKING 2   // The ID for status WORKING (Slave is working on a job)
-#define SLAVE_STATE_READY 3     // The ID for status READY (Slave is ready with a job and has a result)
-#define SLAVE_STATE_ERROR 4     // The ID for status ERROR (Slave has a problem)
+#define SLAVE_STATE_UNKNOWN 0           // The ID for status UNKNOWN (Slave is in an unknown state)
+#define SLAVE_STATE_FREE 1              // The ID for status FREE (Slave is free for the next job)
+#define SLAVE_STATE_WORKING 2           // The ID for status WORKING (Slave is working on a job)
+#define SLAVE_STATE_READY 3             // The ID for status READY (Slave is ready with a job and has a result)
+#define SLAVE_STATE_RESULT_READY 4      // The ID for status READY (The result is ready to send)
+#define SLAVE_STATE_RESULT_SENT 5       // The ID for status READY (The result has been sent)
+#define SLAVE_STATE_ERROR 6             // The ID for status ERROR (Slave has a problem)
 
 int slaveState = SLAVE_STATE_UNKNOWN;
 
@@ -59,7 +61,24 @@ void setup() {
 }
 
 void loop() {
-  
+  if (slaveState == SLAVE_STATE_FREE) {
+    iicEvaluateBufferReceive();
+  }
+  if (slaveState == SLAVE_STATE_WORKING) {
+    
+  }
+  if (slaveState == SLAVE_STATE_READY) {
+    iicSetBufferRequestStringJobResult();
+  }
+  if (slaveState == SLAVE_STATE_RESULT_READY) {
+    
+  }
+  if (slaveState == SLAVE_STATE_RESULT_SENT) {
+    digitalWrite(PIN_LED_WORKING, LOW);
+    digitalWrite(PIN_LED_READY, LOW);
+  }
+  logMessage("Current state: "+String(slaveState));
+  delay(500);
 }
 
 void setState(int state) {
@@ -68,11 +87,15 @@ void setState(int state) {
   if (slaveState == SLAVE_STATE_UNKNOWN) {
     iicSetBufferRequestStringEmpty();
   } else if (slaveState == SLAVE_STATE_FREE) {
-    iicSetBufferRequestStringEmpty();
+    
   } else if (slaveState == SLAVE_STATE_WORKING) {
-    iicSetBufferRequestStringEmpty();
+    
   } else if (slaveState == SLAVE_STATE_READY) {
-    iicSetBufferRequestStringJobResult();
+    
+  } else if (slaveState == SLAVE_STATE_RESULT_READY) {
+    
+  } else if (slaveState == SLAVE_STATE_RESULT_SENT) {
+    
   } else if (slaveState == SLAVE_STATE_ERROR) {
     iicSetBufferRequestStringEmpty();
   } else {

@@ -61,6 +61,7 @@ void clientHttpsRequestPoolConfiguration() {
     serverPoolHost = String(json["ip"]);
     serverPoolPort = String(json["port"]);
     serverPoolName = String(json["name"]);
+    setState(MASTER_STATE_POOL_LOADED);
     logMessage("Updated pool configuration to host " + serverPoolHost + " and port " + serverPoolPort);
     serverPoolError = "";
   } else {

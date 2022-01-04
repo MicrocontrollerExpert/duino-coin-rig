@@ -12,9 +12,6 @@
 #define WIRE_SCL 5          // D1 - A5 - GPIO5
 #define WIRE_CLOCK 100000   // The speed
 
-#define ID_MIN 1            // The first possible address
-#define ID_MAX 50           // The last possible address
-
 #define PREFIX_UNKNOWN 'U'  // The prefix for status UNKNOWN (Slave is in an unknown state)
 #define PREFIX_FREE 'F'     // The prefix for status FREE (Slave is free for the next job)
 #define PREFIX_WORKING 'W'  // The prefix for status WORKING (Slave is working on a job)
@@ -57,11 +54,14 @@ void slavesScan() {
   setState(MASTER_STATE_SCANNING);
   logMessage("Start scanning for slaves");
   int counter = 0;
-  for (byte id=ID_MIN ; id<=ID_MAX ; id++) {
+  for (byte id=SLAVE_ID_MIN ; id<=SLAVE_ID_MAX ; id++) {
     if (slaveExists(id)) {
       logMessage("Slave found with ID: " + String(id));
       String text = slaveRequestLn(id);
       counter++;
+      slaveFound[id] = true;
+    } else {
+      slaveFound[id] = false;
     }
   }
   cores_sum = counter;
@@ -99,7 +99,7 @@ void slaveSendMessage(byte id, String message) {
  * @param String message The message to be sent to all slaves
  */
 void slavesSendMessage(String message) {
-  for (byte id=ID_MIN ; id<=ID_MAX ; id++) {
+  for (byte id=SLAVE_ID_MIN ; id<=SLAVE_ID_MAX ; id++) {
     if (slaveExists(id)) {
       slaveSendText(id, message);
     }
@@ -114,8 +114,8 @@ void slavesSendMessage(String message) {
  * @param String hashNextBlock The hash for the next block
  * @param int difficulty The difficulty
  */
-void slaveSendNextJob(byte id, String hashLastBlock, String hashNextBlock, int difficulty) {
-  String job = hashLastBlock + "," + hashNextBlock + "," + difficulty;
+void slaveSendNextJob(byte id, String resultType, String lastBlockHash, String nextBlockHash, String difficulty) {
+  String job = resultType + ":" + lastBlockHash + ":" + nextBlockHash + ":" + difficulty;
   slaveSendLn(id, job);
 }
 
@@ -126,11 +126,12 @@ void slaveSendNextJob(byte id, String hashLastBlock, String hashNextBlock, int d
  * @param String text The text to be sent to the slave
  */
 void slaveSendText(byte id, String text) {
+  logMessage("Send text to slave wit ID "+String(id)+": "+text);
   wireInit();
   for (int pos=0 ; pos<text.length() ; pos++) {
-    Wire.beginTransmission(id);
-    Wire.write(text.charAt(pos));
-    Wire.endTransmission();
+     Wire.beginTransmission(id);
+     Wire.write(text.charAt(pos));
+     Wire.endTransmission();
   }
 }
 

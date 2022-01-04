@@ -39,12 +39,18 @@
 #define MASTER_STATE_CONNECTING_WIFI 5      // The ID for status CONNECTING_WIFI (Master connects to WiFi)
 #define MASTER_STATE_WIFI_CONNECTED 6       // The ID for status CONNECTING_WIFI (Master connects to WiFi)
 #define MASTER_STATE_LOADING_POOL 7         // The ID for status LOADING_POOL (Master loads pool configuration)
-#define MASTER_STATE_CONNECTING_CLIENTS 8   // The ID for status CONNECTING_CLIENTS (Master connects clients to pool)
-#define MASTER_STATE_RUNNING 9              // The ID for status RUNNING (Master and slaves are up and running)
+#define MASTER_STATE_POOL_LOADED 8          // The ID for status POOL_LOADED (Master successfully loaded pool configuration)
+#define MASTER_STATE_CONNECTING_CLIENTS 9   // The ID for status CONNECTING_CLIENTS (Master connects clients to the pool server)
+#define MASTER_STATE_CLIENTS_CONNECTED 10   // The ID for status CLIENTS_CONNECTED (Master connected clients to the pool server)
+#define MASTER_STATE_RUNNING 11             // The ID for status RUNNING (Master and slaves are up and running)
+
+#define SLAVE_ID_MIN 1                      // The first possible address for a slave
+#define SLAVE_ID_MAX 50                     // The last possible address for a slave
 
 // Configuration
 String softwareName             = "DuinoCoinRig";
 String softwareVersion          = "0.1";
+String minerName                = "AVR I2C v2.7.3";
 String configStatus             = "";
 String wifiSsid                 = "";                         // Your WiFi SSID
 String wifiPassword             = "";                         // Your WiFi password
@@ -65,9 +71,11 @@ int masterState = MASTER_STATE_UNKNOWN;                       // The current sta
 String serverPoolError          = "";                         // The last pool error
 int cores_sum = 0;                                            // The number of connected cores
 int cores_online = 0;                                         // The number of cores with a connection to the pool
-int jobs_good = 0;                                            // The number of cores with a connection to the pool
-int jobs_bad = 0;                                             // The number of cores with a connection to the pool
-  
+int jobs_sum = 0;                                             // The number of jobs (complete)
+int jobs_good = 0;                                            // The number of good jobs
+int jobs_bad = 0;                                             // The number of bad jobs
+bool slaveFound[SLAVE_ID_MAX];                                // An array with all possible IDs and the information if there is a slave with this ID
+
 // Methods Logging
 void logSetup();
 void logMessage(String message);
@@ -113,26 +121,41 @@ void setup() {
  * The main loop for the software
  */
 void loop() {
-  // put your main code here, to run repeatedly:
-  if (sdCardReady() && !wifiConnected()) {
-    sdCardReadConfigFile();
-    wifiSetup(wifiSsid, wifiPassword);
-  }
-  if (serverPoolHost=="" && wifiConnected()) {
-    clientHttpsRequestPoolConfiguration();
-  }
   displayScreenHome();
   
-  if (masterState == MASTER_STATE_LOADING_POOL) {
-    setState(MASTER_STATE_CONNECTING_CLIENTS);
+  if (sdCardReady() && !wifiConnected()) {
+    sdCardReadConfigFile();
+    displayScreenHome();
   }
-  if (masterState == MASTER_STATE_LOADING_POOL) {
-    setState(MASTER_STATE_CONNECTING_CLIENTS);
+  
+  if (masterState == MASTER_STATE_CONFIG_LOADED) {
+    wifiSetup(wifiSsid, wifiPassword);
+    displayScreenHome();
   }
-  if (masterState == MASTER_STATE_CONNECTING_CLIENTS) {
+  
+  if (masterState == MASTER_STATE_WIFI_CONNECTED) {
+    clientHttpsRequestPoolConfiguration();
+    displayScreenHome();
+  }
+  
+  if (masterState == MASTER_STATE_POOL_LOADED) {
+    clientPoolConnectClients();
+    cores_online = clientPoolClientsOnline();
+    displayScreenHome();
+  }
+  
+  if (masterState == MASTER_STATE_CLIENTS_CONNECTED) {
     setState(MASTER_STATE_RUNNING);
+    displayScreenHome();
   }
-  delay(100);
+
+  if (masterState == MASTER_STATE_RUNNING) {
+    clientPoolRotateStates();
+    clientPoolLogStates();
+    displayScreenHome();
+  }
+  
+  delay(500);
 }
 
 void setState(int state) {

@@ -27,3 +27,10 @@ String getDucoId() {
   }
   return ID;
 }
+
+void ledBlink(int pin, int msOn, int msOff) {
+  digitalWrite(pin, HIGH);
+  delay(msOn);
+  digitalWrite(pin, LOW);
+  delay(msOff);
+}
