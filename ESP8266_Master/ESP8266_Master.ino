@@ -61,10 +61,10 @@ String serverMainPort           = "2812";                     // The port to con
 String serverMainName           = "Main-Server";              // The name
 String serverPoolRequestHost    = "server.duinocoin.com";     // The host of the pool request server
 String serverPoolRequestPort    = "4242";                     // The port to connect to
-String serverPoolRequestName    = "Pool-Server";              // The name
+String serverPoolRequestName    = "Pool-Request-Server";      // The name
 String serverPoolHost           = "";                         // The host of the pool server
 String serverPoolPort           = "";                         // The port to connect to
-String serverPoolName           = "";                         // The name
+String serverPoolName           = "Pool-Server";              // The name
 
 // Current state of the rig
 int masterState = MASTER_STATE_UNKNOWN;                       // The current state of the master
@@ -72,6 +72,7 @@ String serverPoolError          = "";                         // The last pool e
 int cores_sum = 0;                                            // The number of connected cores
 int cores_online = 0;                                         // The number of cores with a connection to the pool
 int jobs_sum = 0;                                             // The number of jobs (complete)
+int jobs_blocks = 0;                                          // The number of blocks found
 int jobs_good = 0;                                            // The number of good jobs
 int jobs_bad = 0;                                             // The number of bad jobs
 bool slaveFound[SLAVE_ID_MAX];                                // An array with all possible IDs and the information if there is a slave with this ID
@@ -100,10 +101,11 @@ bool clientPoolConnectClient(int id);
 bool clientPoolRequestNextJobForClient(int id);
 String clientPoolReadJobRequestResultForClient(int id);
 void clientPoolSendClientJobToSlave(int id);
-String clientPoolRequestClientJobResultFromSlave(int id);
+void clientPoolRequestClientJobResultFromSlave(int id);
 bool clientPoolSendJobResultForClient(int id);
 String clientPoolReadJobResultResultForClient(int id);
 String clientPoolGetContentFromClient(int id);
+void clientPoolGetAndEvaluateContent(int id);
 void setStateClient(int id, int state);
 
 // Methods Display
@@ -143,7 +145,7 @@ void setup() {
   logMessage("");
   logMessage("DuinoCoinRig V0.1");
   displaySetup();
-  delay(2000);
+  delay(12000);
   slavesSetup();
   displayScreenHome();
   sdCardSetup();
@@ -183,11 +185,11 @@ void loop() {
 
   if (masterState == MASTER_STATE_RUNNING) {
     clientPoolRotateStates();
-    clientPoolLogStates();
+    // clientPoolLogStates();
     displayScreenHome();
   }
   
-  delay(500);
+  delay(50);
 }
 
 void setState(int state) {
