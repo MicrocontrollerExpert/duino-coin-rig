@@ -75,12 +75,11 @@ void iicEvaluateBufferReceive() {
       result_type = result_type_string.charAt(0);
       logMessage("Receive just result_type: "+String(result_type));
     } else {
-      String result_type_string = bufferReceive.readStringUntil(':');
-      result_type = result_type_string.charAt(0);
+      String message = bufferReceive.readStringUntil(':');
       lastBlockHash = bufferReceive.readStringUntil(':');
       nextBlockHash = bufferReceive.readStringUntil(':');
       unsigned int difficulty = bufferReceive.readStringUntil('\n').toInt();
-      logMessage("Receive result_type: "+String(result_type));
+      logMessage("Receive message: "+String(message));
       logMessage("Receive lastBlockHash: "+lastBlockHash);
       logMessage("Receive nextBlockHash: "+nextBlockHash);
       logMessage("Receive difficulty: "+String(difficulty));
@@ -89,13 +88,19 @@ void iicEvaluateBufferReceive() {
         digitalWrite(PIN_LED_WORKING, HIGH);
         microtimeStart = micros();
         ducos1aResult = 0;
-        if (difficulty < 655) ducos1aResult = Ducos1a.work(lastBlockHash, nextBlockHash, difficulty);
+        if (difficulty < 655){
+          ducos1aResult = Ducos1a.work(lastBlockHash, nextBlockHash, difficulty);
+        }
+        logMessage("Calculated result: "+String(ducos1aResult));
         microtimeEnd = micros();
         microtimeDifference = microtimeEnd - microtimeStart;
         setState(SLAVE_STATE_READY);
         digitalWrite(PIN_LED_READY, HIGH);
+        delay(100);
+        iicSetBufferRequestStringJobResult();
       } else {
         setState(SLAVE_STATE_ERROR);
+        logMessage("ERROR");
       }
     }
   }
@@ -114,35 +119,12 @@ void iicHandlerRequest() {
 
 void iicSetBufferRequestStringEmpty() {
   String request = "";
-  iicSetBufferRequestString(request);
 }
 
 void iicSetBufferRequestStringJobResult() {
-  String request = "";
-  if (result_type == CHAR_REQUEST_FULL) {
-    request = lastBlockHash+":"+nextBlockHash+":"+String(ducos1aResult)+":"+ducoId+":"+String(microtimeDifference);
-  }
-  iicSetBufferRequestString(request);
-  setState(SLAVE_STATE_RESULT_READY);
-}
-
-void iicSetBufferRequestString(String request) {
   while (bufferRequest.available()) bufferRequest.read();
-  stringRequest = ""; 
-  if (slaveState == SLAVE_STATE_UNKNOWN) {
-    stringRequest += PREFIX_UNKNOWN;
-  } else if (slaveState == SLAVE_STATE_FREE) {
-    stringRequest += PREFIX_FREE;
-  } else if (slaveState == SLAVE_STATE_WORKING) {
-    stringRequest += PREFIX_WORKING;
-  } else if (slaveState == SLAVE_STATE_READY) {
-    stringRequest += PREFIX_READY;
-  } else if (slaveState == SLAVE_STATE_ERROR) {
-    stringRequest += PREFIX_ERROR;
-  } else {
-    stringRequest += "?";
-  }
-  stringRequest += ":"+request+"\n";
-  logMessage("Request: "+stringRequest);
-  bufferRequest.print(stringRequest);
+  String request = lastBlockHash+":"+nextBlockHash+":"+String(ducos1aResult)+":"+ducoId+":"+String(microtimeDifference)+"\n";
+  logMessage(request);
+  bufferRequest.print(request);
+  setState(SLAVE_STATE_RESULT_SENT);
 }

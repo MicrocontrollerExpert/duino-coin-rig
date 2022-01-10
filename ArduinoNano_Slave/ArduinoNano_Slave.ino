@@ -23,12 +23,6 @@
 #define PIN_LED_READY     13
 #define PIN_ANALOG_IN     A1
 
-#define PREFIX_UNKNOWN 'U'      // The prefix for status UNKNOWN (Slave is in an unknown state)
-#define PREFIX_FREE 'F'         // The prefix for status FREE (Slave is free for the next job)
-#define PREFIX_WORKING 'W'      // The prefix for status WORKING (Slave is working on a job)
-#define PREFIX_READY 'R'        // The prefix for status READY (Slave is ready with a job and has a result)
-#define PREFIX_ERROR 'E'        // The prefix for status ERROR (Slave has a problem)
-
 #define SLAVE_STATE_UNKNOWN 0           // The ID for status UNKNOWN (Slave is in an unknown state)
 #define SLAVE_STATE_FREE 1              // The ID for status FREE (Slave is free for the next job)
 #define SLAVE_STATE_WORKING 2           // The ID for status WORKING (Slave is working on a job)
@@ -38,6 +32,26 @@
 #define SLAVE_STATE_ERROR 6             // The ID for status ERROR (Slave has a problem)
 
 int slaveState = SLAVE_STATE_UNKNOWN;
+
+// Methods Helper
+int getRandomByte();
+String getDucoId();
+void ledBlink(int pin, int msOn, int msOff);
+
+// Methods Iic
+void iicSetup();
+void iicHandlerReceive(int numBytes);
+void iicEvaluateBufferReceive();
+void iicHandlerRequest();
+void iicSetBufferRequestStringEmpty();
+void iicSetBufferRequestStringJobResult();
+
+// Methods Log
+void logSetup();
+void logMessage(String message);
+void logMessageSerial(String message);
+void logMessageI2C(String message);
+
 
 void setup() {
   delay(100);
@@ -54,7 +68,7 @@ void setup() {
     digitalWrite(PIN_LED_READY, LOW);
   }
   logSetup();
-  delay(50);
+  delay(getStartupDelay());
   setState(SLAVE_STATE_UNKNOWN);
   int wait = getRandomByte()+getRandomByte()*2+getRandomByte()*3+getRandomByte()*4;
   iicSetup();
@@ -63,23 +77,20 @@ void setup() {
 void loop() {
   if (slaveState == SLAVE_STATE_FREE) {
     iicEvaluateBufferReceive();
-  }
-  if (slaveState == SLAVE_STATE_WORKING) {
+  } else if (slaveState == SLAVE_STATE_WORKING) {
     
-  }
-  if (slaveState == SLAVE_STATE_READY) {
+  } else if (slaveState == SLAVE_STATE_READY) {
     iicSetBufferRequestStringJobResult();
-  }
-  if (slaveState == SLAVE_STATE_RESULT_READY) {
-    
-  }
-  if (slaveState == SLAVE_STATE_RESULT_SENT) {
+  } else if (slaveState == SLAVE_STATE_RESULT_READY) {
+   
+  } else if (slaveState == SLAVE_STATE_RESULT_SENT) {
     digitalWrite(PIN_LED_WORKING, LOW);
     digitalWrite(PIN_LED_READY, LOW);
+    delay(2000);
     setState(SLAVE_STATE_FREE);
   }
   logMessage("Current state: "+String(slaveState));
-  delay(500);
+  delay(1000);
 }
 
 void setState(int state) {
