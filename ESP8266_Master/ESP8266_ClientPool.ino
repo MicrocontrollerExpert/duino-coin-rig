@@ -22,16 +22,19 @@ String ducos1aResult[SLAVE_ID_MAX];
 String ducoId[SLAVE_ID_MAX];
 String microtimeDifference[SLAVE_ID_MAX];
 
+int poolClientLoopsWithoutStateChange[SLAVE_ID_MAX];
+
 #define CLIENT_STATE_UNKNOWN 0
 #define CLIENT_STATE_OFFLINE 1
-#define CLIENT_STATE_ONLINE 2
-#define CLIENT_STATE_JOB_REQUEST_SENT_TO_SERVER 3
-#define CLIENT_STATE_JOB_REQUEST_RESULT_FROM_SERVER 4
-#define CLIENT_STATE_JOB_SENT_TO_SLAVE 5
-#define CLIENT_STATE_JOB_RESULT_FROM_SLAVE 6
-#define CLIENT_STATE_JOB_RESULT_SENT_TO_SERVER 7
-#define CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER 8
-#define CLIENT_STATE_ERROR 9
+#define CLIENT_STATE_CONNECTING 2
+#define CLIENT_STATE_ONLINE 3
+#define CLIENT_STATE_JOB_REQUEST_SENT_TO_SERVER 4
+#define CLIENT_STATE_JOB_REQUEST_RESULT_FROM_SERVER 5
+#define CLIENT_STATE_JOB_SENT_TO_SLAVE 6
+#define CLIENT_STATE_JOB_RESULT_FROM_SLAVE 7
+#define CLIENT_STATE_JOB_RESULT_SENT_TO_SERVER 8
+#define CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER 9
+#define CLIENT_STATE_ERROR 10
 
 /**
  * Initializes the pool client part of the software
@@ -42,6 +45,7 @@ void clientPoolSetup() {
     poolClientBuffer[id] = "";
     setStateClient(id, CLIENT_STATE_UNKNOWN);
     poolClientTimeRequestStart[id] = 0;
+    poolClientLoopsWithoutStateChange[id] = 0;
   }
 }
 
@@ -61,14 +65,17 @@ void clientPoolConnectClients() {
 void clientPoolRotateStates() {
   for (int id=SLAVE_ID_MIN ; id<=SLAVE_ID_MAX ; id++) {
     if (slaveFound[id]) {
+      poolClientLoopsWithoutStateChange[id]++;
       if (poolClientState[id] == CLIENT_STATE_UNKNOWN) {
         clientPoolConnectClient(id); 
       } else if (poolClientState[id] == CLIENT_STATE_OFFLINE) {
         clientPoolConnectClient(id); 
+      } else if (poolClientState[id] == CLIENT_STATE_CONNECTING) {
+        clientPoolClientIsConnected(id);
       } else if (poolClientState[id] == CLIENT_STATE_ONLINE) {
         clientPoolRequestNextJobForClient(id);
       } else if (poolClientState[id] == CLIENT_STATE_JOB_REQUEST_SENT_TO_SERVER) {
-        clientPoolReadJobRequestResultForClient(id);
+        clientPoolGetAndEvaluateContent(id);
       } else if (poolClientState[id] == CLIENT_STATE_JOB_REQUEST_RESULT_FROM_SERVER) {
         clientPoolSendClientJobToSlave(id);
       } else if (poolClientState[id] == CLIENT_STATE_JOB_SENT_TO_SLAVE) {
@@ -76,16 +83,42 @@ void clientPoolRotateStates() {
       } else if (poolClientState[id] == CLIENT_STATE_JOB_RESULT_FROM_SLAVE) {
         clientPoolSendJobResultForClient(id);
       } else if (poolClientState[id] == CLIENT_STATE_JOB_RESULT_SENT_TO_SERVER) {
-        clientPoolReadJobResultResultForClient(id);
+        clientPoolGetAndEvaluateContent(id);
       } else if (poolClientState[id] == CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER) {
-        unsigned long poolClientTimeRequestEnd = millis();
-        if ((poolClientTimeRequestEnd - poolClientTimeRequestStart[id]) > 30000) {
-          poolClientState[id] = CLIENT_STATE_ONLINE;
-        }
+        // if ((millis() - poolClientTimeRequestStart[id]) > 5000) {
+          poolClientState[id] = CLIENT_STATE_ONLINE;  
+        // }
       } else {
         poolClientState[id] = CLIENT_STATE_UNKNOWN;
       }
+      if (poolClientLoopsWithoutStateChange[id]>500) {
+        clientPoolValidateState(id);
+      }
     }
+  }
+}
+
+void clientPoolValidateState(int id) {
+  if (poolClientState[id] == CLIENT_STATE_UNKNOWN) {
+    
+  } else if (poolClientState[id] == CLIENT_STATE_OFFLINE) {
+    
+  } else if (poolClientState[id] == CLIENT_STATE_CONNECTING) {
+    
+  } else if (poolClientState[id] == CLIENT_STATE_ONLINE) {
+    
+  } else if (poolClientState[id] == CLIENT_STATE_JOB_REQUEST_SENT_TO_SERVER) {
+    setStateClient(id, CLIENT_STATE_ONLINE);
+  } else if (poolClientState[id] == CLIENT_STATE_JOB_REQUEST_RESULT_FROM_SERVER) {
+    
+  } else if (poolClientState[id] == CLIENT_STATE_JOB_SENT_TO_SLAVE) {
+    
+  } else if (poolClientState[id] == CLIENT_STATE_JOB_RESULT_FROM_SLAVE) {
+    
+  } else if (poolClientState[id] == CLIENT_STATE_JOB_RESULT_SENT_TO_SERVER) {
+    setStateClient(id, CLIENT_STATE_JOB_RESULT_FROM_SLAVE);
+  } else if (poolClientState[id] == CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER) {
+    
   }
 }
 
@@ -125,6 +158,7 @@ int clientPoolClientsOnline() {
 bool clientPoolClientIsConnected(int id) {
   if (poolClientInstance[id].connected()) {
     setStateClient(id, CLIENT_STATE_ONLINE);
+    poolClientInstance[id].setTimeout(500);
     return true;
   }
   setStateClient(id, CLIENT_STATE_OFFLINE);
@@ -142,11 +176,16 @@ bool clientPoolConnectClient(int id) {
   if (clientPoolClientIsConnected(id)) {
     return true;
   }
-  if (!poolClientInstance[id].connect(serverPoolHost.c_str(), serverPoolPort.toInt())) {
-    poolClientState[id] = CLIENT_STATE_OFFLINE;
+  if (poolClientState[id] == CLIENT_STATE_CONNECTING) {
     return false;
   }
-  setStateClient(id, CLIENT_STATE_ONLINE);
+  logMessage("Try connecting!");
+  poolClientInstance[id].setTimeout(30000);
+  if (!poolClientInstance[id].connect(serverPoolHost.c_str(), serverPoolPort.toInt())) {
+    setStateClient(id, CLIENT_STATE_OFFLINE);
+    return false;
+  }
+  setStateClient(id, CLIENT_STATE_CONNECTING);
   return true;
 }
 
@@ -162,7 +201,7 @@ bool clientPoolRequestNextJobForClient(int id) {
     return false;
   }
   logMessage("Request next job for client with ID "+String(id));
-  poolClientInstance[id].print("JOB," + nameUser + ",AVR");
+  poolClientInstance[id].print("JOB," + nameUser + ",AVR\n");
   poolClientTimeRequestStart[id] = millis();
   setStateClient(id, CLIENT_STATE_JOB_REQUEST_SENT_TO_SERVER);
   return true;
@@ -172,34 +211,26 @@ bool clientPoolRequestNextJobForClient(int id) {
  * Reads the job result for the client with the given ID
  * 
  * @param int id The id of the client
- * 
- * @return String Returns the result or an empty string
+ * @param String content The content from pool server
  */
-String clientPoolReadJobRequestResultForClient(int id) {
-  if (!clientPoolClientIsConnected(id)) {
-    return "";
-  }
-  String result = clientPoolGetContentFromClient(id);
-  if (result != "") {
-    logMessage("Jobdata from pool Server for client with ID "+String(id)+ ": "+result);
-    poolClientLastBlockHash[id] = splitStringAndGetValue(result, ',', 0);
-    poolClientNextBlockHash[id] = splitStringAndGetValue(result, ',', 1);
-    poolClientDifficulty[id] = splitStringAndGetValue(result, ',', 2);
+void clientPoolEvaluateJobResultForClient(int id, String content) {
+  
+  poolClientLastBlockHash[id] = splitStringAndGetValue(content, ',', 0);
+  poolClientNextBlockHash[id] = splitStringAndGetValue(content, ',', 1);
+  poolClientDifficulty[id] = splitStringAndGetValue(content, ',', 2);
 
-    if (poolClientLastBlockHash[id].length() > 40) {
-      int lengthVersionText = poolClientLastBlockHash[id].length()-40;
-      poolClientServerVersion[id] = poolClientLastBlockHash[id].substring(0, lengthVersionText);
-      poolClientLastBlockHash[id] = poolClientLastBlockHash[id].substring(lengthVersionText);
-    }
-    if (poolClientLastBlockHash[id].length() < 10) {
-      logMessage("Invalid job result for client with ID "+String(id)+ ": "+result);
-      setStateClient(id, CLIENT_STATE_ONLINE);
-    } else {
-      logMessage("Next job for client with ID "+String(id)+ ": "+poolClientLastBlockHash[id]+":"+poolClientNextBlockHash[id]+":"+poolClientDifficulty[id]);
-      setStateClient(id, CLIENT_STATE_JOB_REQUEST_RESULT_FROM_SERVER);
-    }
+  if (poolClientLastBlockHash[id].length() > 40) {
+    int lengthVersionText = poolClientLastBlockHash[id].length()-40;
+    poolClientServerVersion[id] = poolClientLastBlockHash[id].substring(0, lengthVersionText);
+    poolClientLastBlockHash[id] = poolClientLastBlockHash[id].substring(lengthVersionText);
   }
-  return result;
+  if (poolClientLastBlockHash[id].length() < 10) {
+    logMessage("Invalid job result for client with ID "+String(id)+ ": "+content);
+    setStateClient(id, CLIENT_STATE_ONLINE);
+  } else {
+    logMessage("Next job for client with ID "+String(id)+ ": "+poolClientLastBlockHash[id]+":"+poolClientNextBlockHash[id]+":"+poolClientDifficulty[id]);
+    setStateClient(id, CLIENT_STATE_JOB_REQUEST_RESULT_FROM_SERVER);
+  }
 }
 
 /**
@@ -220,23 +251,22 @@ void clientPoolSendClientJobToSlave(int id) {
  * Requests the job result from the slave with the given ID for the client with the same ID
  * 
  * @param int id The id of the client / slave
- * 
- * @return String Returns the result
  */
-String clientPoolRequestClientJobResultFromSlave(int id) {
+void clientPoolRequestClientJobResultFromSlave(int id) {
   String result = slaveRequestLn(id);
   if (result != "") {
     logMessage("Job result from client with ID "+String(id)+": "+result);
 
-    String resultType = splitStringAndGetValue(result, ':', 0);
-    if (resultType == "R") {
-      ducos1aResult[id] = splitStringAndGetValue(result, ':', 3);
-      ducoId[id] = splitStringAndGetValue(result, ':', 4);
-      microtimeDifference[id] = splitStringAndGetValue(result, ':', 5);
-      setStateClient(id, CLIENT_STATE_JOB_RESULT_FROM_SLAVE); 
+    if (poolClientDifficulty[id].toInt() < 655) {
+      ducos1aResult[id] = splitStringAndGetValue(result, ':', 2);
+    } else {
+      ducos1aResult[id] = "0";
     }
+    
+    ducoId[id] = splitStringAndGetValue(result, ':', 3);
+    microtimeDifference[id] = splitStringAndGetValue(result, ':', 4);
+    setStateClient(id, CLIENT_STATE_JOB_RESULT_FROM_SLAVE); 
   }
-  return result;
 }
 
 /**
@@ -251,7 +281,7 @@ bool clientPoolSendJobResultForClient(int id) {
     return false;
   }
   float hashRate = 190 + random(-50, 50) / 100.0;
-  String result = ducos1aResult[id] + "," + String(hashRate, 2) + ","+minerName+",RIG CORE " + String(id);
+  String result = ducos1aResult[id] + "," + String(hashRate, 2) + ","+minerName+",RIG CORE " + String(id) + "," + ducoId[id].substring(6,16);
   logMessage("Client with ID "+String(id)+" sends result to Server: "+result);
   poolClientInstance[id].print(result);
   setStateClient(id, CLIENT_STATE_JOB_RESULT_SENT_TO_SERVER);
@@ -259,29 +289,23 @@ bool clientPoolSendJobResultForClient(int id) {
 }
 
 /**
- * Reads the result for the job result from the client with the given ID
+ * Evaluates the result for the job result from the client with the given ID
  * 
- * @param int id The id of the client
+ * @param int id The client ID
+ * @param String content The content from pool server
  * 
  * @return String Returns the result or an empty string
  */
-String clientPoolReadJobResultResultForClient(int id) {
-  if (!clientPoolClientIsConnected(id)) {
-    return "";
+void clientPoolEvaluateResultResultForClient(int id, String content) {
+  if (content.substring(0, 3)=="BAD") {
+    jobs_bad++;
+  } else if (content.substring(0, 4)=="GOOD") {
+    jobs_good++;
+  } else if (content.substring(0, 5)=="BLOCK") {
+    jobs_blocks++;
   }
-  String result = clientPoolGetContentFromClient(id);
-  if (result != "") {
-    logMessage("Result from server for job from client with ID "+String(id)+": "+result);
-    if (result.substring(0, 3)=="BAD") {
-      jobs_bad++;
-    } else if (result.substring(0, 4)=="GOOD") {
-      jobs_good++;
-    }
-    jobs_sum++;
-    setStateClient(id, CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER);
-    
-  }
-  return result;
+  jobs_sum++;
+  setStateClient(id, CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER);
 }
 
 /**
@@ -293,6 +317,7 @@ String clientPoolReadJobResultResultForClient(int id) {
  */
 String clientPoolGetContentFromClient(int id) {
   String content = "";
+  String contentBefore = poolClientBuffer[id];
   if (poolClientInstance[id].available()) {
     while (poolClientInstance[id].available()) {
       char nextChar = poolClientInstance[id].read();
@@ -304,10 +329,42 @@ String clientPoolGetContentFromClient(int id) {
       }
     }
   }
+  if (contentBefore!="" && contentBefore==poolClientBuffer[id]) {
+    content = poolClientBuffer[id];
+    poolClientBuffer[id] = "";
+  }
   return content;
 }
 
+/**
+ * Reads and returns the content from the client with the given ID
+ * 
+ * @param int id The id of the client
+ */
+void clientPoolGetAndEvaluateContent(int id) {
+  String content = clientPoolGetContentFromClient(id);
+  if (content != "") {
+    logMessage("Content from server for client with ID "+String(id)+": "+content);
+    if (content.substring(0, 3)=="BAD" || content.substring(0, 4)=="GOOD" || content.substring(0, 5)=="BLOCK") {
+      logMessage("Content classified for method clientPoolEvaluateResultResultForClient");
+      clientPoolEvaluateResultResultForClient(id, content);
+    } else {
+      logMessage("Content classified for method clientPoolEvaluateJobResultForClient");
+      clientPoolEvaluateJobResultForClient(id, content);
+    }
+  }
+}
+
+/**
+ * Sets the state for the client
+ *
+ * @param int id The client ID
+ * @param int state The new state for the client
+ */
 void setStateClient(int id, int state) {
-  poolClientState[id] = state;
-  logMessage("Set client state ID: "+String(state));
+  if (poolClientState[id] != state) {
+    poolClientLoopsWithoutStateChange[id] = 0;
+    poolClientState[id] = state;
+    logMessage("Set client state ID: "+String(state));
+  }
 }

@@ -66,7 +66,7 @@ void displayScreenHome() {
       text = "WiFi: "+wifiGetIp()+"\n";
       text+= "Pool: "+clientHttpsGetPoolString()+"\n";
       text+= "Cores: "+String(cores_sum)+" / Online: "+String(cores_online)+"\n";
-      text+= "Jobs: "+String(jobs_sum)+"\n";
+      text+= "Jobs: "+String(jobs_sum)+" / Blocks: "+String(jobs_blocks)+"\n";
       text+= "Good: "+String(jobs_good)+" / Bad: "+String(jobs_bad);
     }
   }

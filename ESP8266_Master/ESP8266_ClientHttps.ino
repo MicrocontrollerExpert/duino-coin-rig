@@ -52,6 +52,12 @@ String clientHttpsGetContent(String url) {
  */ 
 void clientHttpsRequestPoolConfiguration() {
   setState(MASTER_STATE_LOADING_POOL);
+  if (serverPoolHost!="" && serverPoolPort!="") {
+    setState(MASTER_STATE_POOL_LOADED);
+    logMessage("Updated pool configuration to host " + serverPoolHost + " and port " + serverPoolPort);
+    serverPoolError = "";
+    return;
+  }
   String url = "https://server.duinocoin.com/getPool";
   logMessage("Request pool from "+url);
   String content = clientHttpsGetContent(url);
