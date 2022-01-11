@@ -117,15 +117,15 @@ void sdCardReadConfigFile() {
       } else if (config.substring(0, 17) == "server_main_name=") {
         serverMainName = config.substring(17);
         logMessage("Config for main server name loaded");
-      } else if (config.substring(0, 17) == "server_pool_host=") {
-        serverPoolRequestHost = config.substring(17);
+      } else if (config.substring(0, 25) == "server_pool_request_host=") {
+        serverPoolRequestHost = config.substring(25);
         serverPoolRequestHost = "server.duinocoin.com";
         logMessage("Config for pool request server host loaded");
-      } else if (config.substring(0, 17) == "server_pool_port=") {
-        serverPoolRequestPort = config.substring(17);
+      } else if (config.substring(0, 25) == "server_pool_request_port=") {
+        serverPoolRequestPort = config.substring(25);
         logMessage("Config for pool request server port loaded");
-      } else if (config.substring(0, 17) == "server_pool_name=") {
-        serverPoolRequestName = config.substring(17);
+      } else if (config.substring(0, 25) == "server_pool_request_name=") {
+        serverPoolRequestName = config.substring(25);
         logMessage("Config for pool request server name loaded");
       }
     }

@@ -55,7 +55,7 @@ String configStatus             = "";
 String wifiSsid                 = "";                         // Your WiFi SSID
 String wifiPassword             = "";                         // Your WiFi password
 String nameUser                 = "";                         // Your Duino Coin username
-String nameRig                  = "";                         // Your name for this rig
+String nameRig                  = "DuCo-Rig";                 // Your name for this rig
 String serverMainHost           = "server.duinocoin.com";     // The host of the main server
 String serverMainPort           = "2812";                     // The port to connect to
 String serverMainName           = "Main-Server";              // The name
@@ -65,6 +65,8 @@ String serverPoolRequestName    = "Pool-Request-Server";      // The name
 String serverPoolHost           = "";                         // The host of the pool server
 String serverPoolPort           = "";                         // The port to connect to
 String serverPoolName           = "Pool-Server";              // The name
+
+bool loadConfigFromSdCard       = false;                       // With true loads config from SD card and overwrites this config here
 
 // Current state of the rig
 int masterState = MASTER_STATE_UNKNOWN;                       // The current state of the master
@@ -148,7 +150,9 @@ void setup() {
   delay(12000);
   slavesSetup();
   displayScreenHome();
-  sdCardSetup();
+  if (loadConfigFromSdCard) {
+    sdCardSetup();
+  }
 }
 
 /**
@@ -159,6 +163,9 @@ void loop() {
   
   if (sdCardReady() && !wifiConnected()) {
     sdCardReadConfigFile();
+    displayScreenHome();
+  } else if (!loadConfigFromSdCard && !wifiConnected()) {
+    setState(MASTER_STATE_CONFIG_LOADED);
     displayScreenHome();
   }
   
