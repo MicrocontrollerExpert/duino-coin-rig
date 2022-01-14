@@ -1,16 +1,17 @@
 /*
  * Project: DuinoCoinRig
- * File:    ESP8266_ClientPool
+ * File:    ESP32_ClientPool
  * Version: 0.1
  * Purpose: Connection and communication with the Duino Coin Pool
  * Author:  Frank Niggemann
  */
 
-#include <ESP8266WiFi.h> // Include WiFi library
-#include <ESP8266mDNS.h> // OTA libraries
+#include <WiFi.h>
+#include <WiFiClient.h>
 
 WiFiClient poolClientInstance[SLAVE_ID_MAX];
 String poolClientBuffer[SLAVE_ID_MAX];
+String poolClientContent[SLAVE_ID_MAX];
 String poolClientServerVersion[SLAVE_ID_MAX];
 String poolClientLastBlockHash[SLAVE_ID_MAX];
 String poolClientNextBlockHash[SLAVE_ID_MAX];
@@ -91,7 +92,7 @@ void clientPoolRotateStates() {
       } else {
         poolClientState[id] = CLIENT_STATE_UNKNOWN;
       }
-      if (poolClientLoopsWithoutStateChange[id]>500) {
+      if (poolClientLoopsWithoutStateChange[id]>5000) {
         clientPoolValidateState(id);
       }
     }
@@ -181,7 +182,7 @@ bool clientPoolConnectClient(int id) {
   }
   logMessage("Try connecting!");
   poolClientInstance[id].setTimeout(30000);
-  if (!poolClientInstance[id].connect(serverPoolHost.c_str(), serverPoolPort.toInt())) {
+  if (!poolClientInstance[id].connect(serverPoolHost.c_str(), serverPoolPort)) {
     setStateClient(id, CLIENT_STATE_OFFLINE);
     return false;
   }
@@ -308,6 +309,27 @@ void clientPoolEvaluateResultResultForClient(int id, String content) {
   setStateClient(id, CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER);
 }
 
+
+void clientPoolReadClient(int id) {
+  String contentBefore = poolClientBuffer[id];
+  if (poolClientInstance[id].available()) {
+    while (poolClientInstance[id].available()) {
+      char nextChar = poolClientInstance[id].read();
+      if (nextChar != '\n') {
+        poolClientBuffer[id] += nextChar;
+      } else {
+        poolClientContent[id] = poolClientBuffer[id];
+        poolClientBuffer[id] = "";
+      }
+    }
+  }
+  if (contentBefore!="" && contentBefore==poolClientBuffer[id]) {
+    poolClientContent[id] = poolClientBuffer[id];
+    poolClientBuffer[id] = "";
+  }
+}
+
+
 /**
  * Reads and returns the content from the client with the given ID
  * 
@@ -316,22 +338,11 @@ void clientPoolEvaluateResultResultForClient(int id, String content) {
  * @return String The content
  */
 String clientPoolGetContentFromClient(int id) {
+  clientPoolReadClient(id);
   String content = "";
-  String contentBefore = poolClientBuffer[id];
-  if (poolClientInstance[id].available()) {
-    while (poolClientInstance[id].available()) {
-      char nextChar = poolClientInstance[id].read();
-      if (nextChar != '\n') {
-        poolClientBuffer[id] += nextChar;
-      } else {
-        content = poolClientBuffer[id];
-        poolClientBuffer[id] = "";
-      }
-    }
-  }
-  if (contentBefore!="" && contentBefore==poolClientBuffer[id]) {
-    content = poolClientBuffer[id];
-    poolClientBuffer[id] = "";
+  if (poolClientContent[id] != "") {
+    content = poolClientContent[id];
+    poolClientContent[id] = "";
   }
   return content;
 }
@@ -358,7 +369,7 @@ void clientPoolGetAndEvaluateContent(int id) {
 /**
  * Sets the state for the client
  *
- * @param int id The client ID
+ * @param int id The client ID 
  * @param int state The new state for the client
  */
 void setStateClient(int id, int state) {
