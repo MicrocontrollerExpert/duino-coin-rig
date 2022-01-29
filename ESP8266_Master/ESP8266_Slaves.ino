@@ -6,44 +6,27 @@
  * Author:  Frank Niggemann
  */
 
-#include <Wire.h>
 
-#define WIRE_SDA 4          // D2 - A4 - GPIO4
-#define WIRE_SCL 5          // D1 - A5 - GPIO5
-#define WIRE_CLOCK 100000   // The speed
 
-#define PREFIX_UNKNOWN 'U'  // The prefix for status UNKNOWN (Slave is in an unknown state)
-#define PREFIX_FREE 'F'     // The prefix for status FREE (Slave is free for the next job)
-#define PREFIX_WORKING 'W'  // The prefix for status WORKING (Slave is working on a job)
-#define PREFIX_READY 'R'    // The prefix for status READY (Slave is ready with a job and has a result)
-#define PREFIX_ERROR 'E'    // The prefix for status ERROR (Slave has a problem)
-
-#define SLAVE_STATE_UNKNOWN 0
-#define SLAVE_STATE_FREE 1
-#define SLAVE_STATE_WORKING 2
-#define SLAVE_STATE_READY 3
-#define SLAVE_STATE_ERROR 4
-
-#define CLIENT_STATE_OFFLINE 0
-#define CLIENT_STATE_ONLINE 1
-#define CLIENT_STATE_JOB_REQUEST_SENT 2
-#define CLIENT_STATE_JOB_REQUEST_RESULT 3
-#define CLIENT_STATE_JOB_RESULT_SENT 4
-#define CLIENT_STATE_JOB_RESULT_RESULT 5
+/***********************************************************************************************************************
+ * Code Slaves
+ **********************************************************************************************************************/
 
 /**
  * Initializes communication with the slaves
  */
 void slavesSetup() {
-  wireInit();
+  logMessage("Slaves", "slavesSetup", "MethodName", "");
+  slavesWireInit();
   slavesScan();
 }
 
 /**
  * Initializes the I²C data bus
  */
-void wireInit() {
-  Wire.begin(WIRE_SDA, WIRE_SCL);
+void slavesWireInit() {
+  logMessage("Slaves", "slavesWireInit", "MethodName", "");
+  Wire.begin(WIRE_PIN_SDA, WIRE_PIN_SCL);
   Wire.setClock(WIRE_CLOCK);
 }
 
@@ -51,12 +34,13 @@ void wireInit() {
  * Searches for existing slaves
  */
 void slavesScan() {
-  setState(MASTER_STATE_SCANNING);
-  logMessage("Start scanning for slaves");
+  logMessage("Slaves", "slavesScan", "MethodName", "");
+  setStateMaster(MASTER_STATE_SCANNING);
+  logMessage("Slaves", "slavesScan", "MethodDetail", "Start scanning for slaves");
   int counter = 0;
   for (byte id=SLAVE_ID_MIN ; id<=SLAVE_ID_MAX ; id++) {
     if (slaveExists(id)) {
-      logMessage("Slave found with ID: " + String(id));
+      logMessage("Slaves", "slavesScan", "MethodDetail", "Slave found with ID " + String(id));
       String text = slaveRequestLn(id);
       counter++;
       slaveFound[id] = true;
@@ -64,8 +48,8 @@ void slavesScan() {
       slaveFound[id] = false;
     }
   }
-  cores_sum = counter;
-  logMessage("Found "+String(counter)+" slave(s)");
+  nodes_sum = counter;
+  logMessage("Slaves", "slavesScan", "MethodDetail", "Found "+String(counter)+" slave(s)");
 }
 
 /**
@@ -76,7 +60,8 @@ void slavesScan() {
  * @return bool Returns true if slave exists
  */
 boolean slaveExists(byte id) {
-  wireInit();
+  logMessage("Slaves", "slaveExists", "MethodName", "");
+  slavesWireInit();
   Wire.beginTransmission(id);
   byte result = Wire.endTransmission();
   return (result == 0);
@@ -89,7 +74,8 @@ boolean slaveExists(byte id) {
  * @param String message The message to be sent to the slave
  */
 void slaveSendMessage(byte id, String message) {
-  logMessage("Send message to ID: " + id);
+  logMessage("Slaves", "slaveSendMessage", "MethodName", "");
+  logMessage("Slaves", "slaveSendMessage", "MethodDetail", "Send message to ID " + String(id));
   slaveSendLn(id, message);
 }
 
@@ -99,8 +85,11 @@ void slaveSendMessage(byte id, String message) {
  * @param String message The message to be sent to all slaves
  */
 void slavesSendMessage(String message) {
+  logMessage("Slaves", "slavesSendMessage", "MethodName", "");
+  logMessage("Slaves", "slavesSendMessage", "MethodDetail", "Send message to all slaves");
   for (byte id=SLAVE_ID_MIN ; id<=SLAVE_ID_MAX ; id++) {
     if (slaveExists(id)) {
+      logMessage("Slaves", "slavesSendMessage", "MethodDetail", "Send message to ID " + String(id) + " -> " + message);
       slaveSendText(id, message);
     }
   }
@@ -115,6 +104,7 @@ void slavesSendMessage(String message) {
  * @param int difficulty The difficulty
  */
 void slaveSendNextJob(byte id, String resultType, String lastBlockHash, String nextBlockHash, String difficulty) {
+  logMessage("Slaves", "slaveSendNextJob", "MethodName", "");
   String job = resultType + ":" + lastBlockHash + ":" + nextBlockHash + ":" + difficulty;
   slaveSendLn(id, job);
 }
@@ -126,8 +116,9 @@ void slaveSendNextJob(byte id, String resultType, String lastBlockHash, String n
  * @param String text The text to be sent to the slave
  */
 void slaveSendText(byte id, String text) {
-  logMessage("Send text to slave wit ID "+String(id)+": "+text);
-  wireInit();
+  logMessage("Slaves", "slaveSendText", "MethodName", "");
+  logMessage("Slaves", "slaveSendText", "MethodDetail", "Send text to ID " + String(id) + " -> " + text);
+  slavesWireInit();
   for (int pos=0 ; pos<text.length() ; pos++) {
      Wire.beginTransmission(id);
      Wire.write(text.charAt(pos));
@@ -142,6 +133,7 @@ void slaveSendText(byte id, String text) {
  * @param String text The text to be sent to the slave
  */
 void slaveSendLn(byte id, String text) {
+  logMessage("Slaves", "slaveSendLn", "MethodName", "");
   slaveSendText(id, text + "\n");
 }
 
@@ -153,10 +145,11 @@ void slaveSendLn(byte id, String text) {
  * @return String Returns the answer line sent by the slave as a result 
  */
 String slaveRequestLn(byte id) {
+  logMessage("Slaves", "slaveRequestLn", "MethodName", "");
   char end = '\n';
   String text = "";
   boolean done = false;
-  wireInit();
+  slavesWireInit();
   while (!done) {
     Wire.requestFrom(id, 1);
     if (Wire.available()) {
@@ -168,5 +161,6 @@ String slaveRequestLn(byte id) {
       text += c;
     }
   }
+  logMessage("Slaves", "slaveRequestLn", "MethodDetail", "Slave returns text -> " + text);
   return text;
 }

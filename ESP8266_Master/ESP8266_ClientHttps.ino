@@ -6,15 +6,18 @@
  * Author:  Frank Niggemann
  */
 
-#include <ESP8266HTTPClient.h>
-#include <WiFiClientSecure.h>
-#include <ArduinoJson.h>
+
+
+/***********************************************************************************************************************
+ * Code ClientHttps
+ **********************************************************************************************************************/
 
 /**
  * Initializes the HTTPS client part of the software
  */
 void clientHttpsSetup() {
- 
+  logMessage("Master", "clientHttpsSetup", "MethodName", "");
+  https.setTimeout(10000);
 }
 
 /**
@@ -25,54 +28,80 @@ void clientHttpsSetup() {
  * @return String The content
  */
 String clientHttpsGetContent(String url) {
-  String content = "";
-  WiFiClientSecure client;
-  client.setInsecure();
-  
-  HTTPClient http; 
-  http.setTimeout(30000);
-  if (http.begin(client, url))
+  logMessage("ClientHttps", "clientHttpsGetContent", "MethodName", "");
+  String httpsContent = "";
+  std::unique_ptr<BearSSL::WiFiClientSecure>clientSecure(new BearSSL::WiFiClientSecure);
+  clientSecure->setInsecure();
+  if (https.begin(*clientSecure, url))
   {
-    int httpCode = http.GET();
-    if (httpCode == HTTP_CODE_OK)
+    int httpsCode = https.GET();
+    if (httpsCode == HTTP_CODE_OK)
     {
-      content = http.getString();
+      httpsContent = https.getString();
+      logMessage("ClientHttps", "clientHttpsGetContent", "MethodDetail", "HTTPS get content: "+httpsContent);
     }
     else
     {
-      logMessage("HTTP get content failed with error: " + http.errorToString(httpCode));
+      logMessage("ClientHttps", "clientHttpsGetContent", "MethodDetail", "HTTPS get content failed with errorcode ("+String(httpsCode)+") -> " + https.errorToString(httpsCode));
     }
-    http.end();
+    https.end();
   }
-  return content;
+  return httpsContent;
 }
 
 /**
  * Requests a pool configuration from the pool server
  */ 
 void clientHttpsRequestPoolConfiguration() {
-  setState(MASTER_STATE_LOADING_POOL);
+  logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodName", "");
+  if (masterState != MASTER_STATE_LOADING_POOL) {
+    setStateMaster(MASTER_STATE_LOADING_POOL);
+  }
   if (serverPoolHost!="" && serverPoolPort!="") {
-    setState(MASTER_STATE_POOL_LOADED);
-    logMessage("Updated pool configuration to host " + serverPoolHost + " and port " + serverPoolPort);
+    if (masterState != MASTER_STATE_POOL_LOADED) {
+      setStateMaster(MASTER_STATE_POOL_LOADED);
+    }
+    logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodDetail", "Updated pool configuration to host " + serverPoolHost + " and port " + serverPoolPort + " with name " + serverPoolName);
     serverPoolError = "";
     return;
   }
-  String url = "https://server.duinocoin.com/getPool";
-  logMessage("Request pool from "+url);
-  String content = clientHttpsGetContent(url);
+  logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodDetail", "Request pool from " + urlRequestPool);
+  String content = clientHttpsGetContent(urlRequestPool);
   if (content != "") {
+    logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodDetail", "Return content -> " + content);
     DynamicJsonDocument json(1024);
     deserializeJson(json, content);
     serverPoolHost = String(json["ip"]);
     serverPoolPort = String(json["port"]);
     serverPoolName = String(json["name"]);
-    setState(MASTER_STATE_POOL_LOADED);
-    logMessage("Updated pool configuration to host " + serverPoolHost + " and port " + serverPoolPort);
+    setStateMaster(MASTER_STATE_POOL_LOADED);
+    logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodDetail", "Updated pool configuration to host " + serverPoolHost + " and port " + serverPoolPort + " with name " + serverPoolName);
     serverPoolError = "";
   } else {
-    serverPoolError = "Connection failed!";
+    logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodDetail", "Connection failed!");
   }
+}
+
+/**
+ * Requests the user balance for the current user and updates the value in the system
+ */ 
+void clientHttpsRequestUserBalance() {
+  logMessage("ClientHttps", "clientHttpsRequestUserBalance", "MethodName", "");
+  String content = clientHttpsGetContent(urlRequestUserBalance+nameUser);
+  if (content != "") {
+    DynamicJsonDocument json(10000);
+    deserializeJson(json, content);
+    float ducoBalance = json["result"]["balance"];
+    if (balanceFirstValue == 0) {
+      balanceFirstValue = ducoBalance;
+      balanceFirstTimestamp = ntpGetTimestamp();
+    }
+    balanceLastValue = ducoBalance;
+    balanceLastTimestamp = ntpGetTimestamp();
+  } else {
+    logMessage("ClientHttps", "clientHttpsRequestUserBalance", "MethodDetail", "Connection failed!");
+  }
+  
 }
 
 /**
@@ -81,12 +110,11 @@ void clientHttpsRequestPoolConfiguration() {
  * @return String The pool configuration or 'unknown'
  */
 String clientHttpsGetPoolString() {
+  logMessage("ClientHttps", "clientHttpsGetPoolString", "MethodName", "");
   String pool = "Unknown";
-  if (serverPoolError != "") {
-    return serverPoolError;
-  }
-  if (serverPoolHost != "") {
+  if (serverPoolHost!= "" && serverPoolPort!="") {
     pool = serverPoolHost + ":" + serverPoolPort;
   }
+  logMessage("ClientHttps", "clientHttpsGetPoolString", "MethodDetail", "Returns " + pool);
   return pool;
 }

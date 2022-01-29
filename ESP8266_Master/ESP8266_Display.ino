@@ -6,20 +6,17 @@
  * Author:  Frank Niggemann
  */
 
-#define OLED_SDA 4 // D2 - A4 - GPIO4
-#define OLED_SCL 5 // D1 - A5 - GPIO5
-#define OLED_ADDR 0x3C
-#define OLED_FLIP_VERTICALLY 0
 
-#include <Wire.h>
-#include "SSD1306Wire.h"
 
-SSD1306Wire display(OLED_ADDR, OLED_SDA, OLED_SCL);
+/***********************************************************************************************************************
+ * Code Display
+ **********************************************************************************************************************/
 
 /**
  * Initializes the display part of the software
  */
 void displaySetup() {
+  logMessage("Display", "displaySetup", "MethodName", "");
   display.init();
   if (OLED_FLIP_VERTICALLY) {
     display.flipScreenVertically();
@@ -37,6 +34,7 @@ void displaySetup() {
  * Clears the LCD display
  */
 void displayClear() {
+  logMessage("Display", "displayClear", "MethodName", "");
   display.clear();
   display.display();
   delay(10);
@@ -46,6 +44,7 @@ void displayClear() {
  * Displays the home screen on the LCD display
  */
 void displayScreenHome() {
+  logMessage("Display", "displayScreenHome", "MethodName", "");
   display.clear();
   display.setTextAlignment(TEXT_ALIGN_LEFT);
   String text = "";
@@ -59,13 +58,16 @@ void displayScreenHome() {
         text+= "No SD card found!";
       } else {
         text = softwareName+" V"+softwareVersion+"\n";
-        text+= "Config: "+configStatus+"\n";
         text+= "WiFi: "+wifiGetIp();
       }
     } else {
       text = "WiFi: "+wifiGetIp()+"\n";
-      text+= "Pool: "+clientHttpsGetPoolString()+"\n";
-      text+= "Cores: "+String(cores_sum)+" / Online: "+String(cores_online)+"\n";
+      if (serverPoolHost!= "" && serverPoolPort!="") {
+        text+= "Pool: "+clientHttpsGetPoolString()+"\n"; 
+      } else {
+        text+= "Pool: Unknown \n";
+      }
+      text+= "Nodes: "+String(nodes_sum)+" / Online: "+String(nodes_online)+"\n";
       text+= "Jobs: "+String(jobs_sum)+" / Blocks: "+String(jobs_blocks)+"\n";
       text+= "Good: "+String(jobs_good)+" / Bad: "+String(jobs_bad);
     }

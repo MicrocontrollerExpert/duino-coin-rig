@@ -6,8 +6,11 @@
  * Author:  Frank Niggemann
  */
 
-bool logSerial = true;
-bool logSdCard = true;
+
+
+/***********************************************************************************************************************
+ * Code Log
+ **********************************************************************************************************************/
 
 /**
  * Initializes the log part of the software
@@ -22,12 +25,46 @@ void logSetup() {
 /**
  * Writes the message to the configured log destination(s)
  */
-void logMessage(String message) {
-  if (logSerial) {
-    logMessageSerial(message);
+void logMessage(String partName, String methodName, String type, String message) {
+  bool partOk = false;
+  bool typeOk = false;
+  
+  if (partName=="ClientHttps" && logClientHttps) {
+    partOk = true;
+  } else if (partName=="ClientPool" && logClientPool) {
+    partOk = true;
+  } else if (partName=="Display" && logDisplay) {
+    partOk = true;
+  } else if (partName=="Helper" && logHelper) {
+    partOk = true;
+  } else if (partName=="Master" && logMaster) {
+    partOk = true;
+  } else if (partName=="Ntp" && logNtp) {
+    partOk = true;
+  } else if (partName=="SdCard" && logSdCard) {
+    partOk = true;
+  } else if (partName=="ServerHttp" && logServerHttp) {
+    partOk = true;
+  } else if (partName=="Slaves" && logSlaves) {
+    partOk = true;
+  } else if (partName=="WiFi" && logWiFi) {
+    partOk = true;
   }
-  if (logSdCard) {
-    logMessageSdCard(message);
+  
+  if (type=="MethodName" && logMethodNames) {
+    typeOk = true;
+  } else if (type=="MethodDetail" && logMethodDetails) {
+    typeOk = true;
+  } else if (type=="StateChange" && logStateChanges) {
+    typeOk = true;
+  }
+
+  if (partOk && typeOk && logSerial) {
+    if (message != "") {
+      logMessageSerial(partName+"::"+methodName+"() -> "+message);
+    } else {
+      logMessageSerial(partName+"::"+methodName+"()");
+    }
   }
 }
 
@@ -36,11 +73,4 @@ void logMessage(String message) {
  */
 void logMessageSerial(String message) {
   Serial.println(message);
-}
-
-/**
- * Writes the log message to the SD card
- */
-void logMessageSdCard(String message) {
-  // ToDo
 }

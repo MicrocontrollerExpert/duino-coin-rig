@@ -6,28 +6,18 @@
  * Author:  Frank Niggemann
  */
 
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
-#include <ESPAsyncTCP.h>
-#include <SPIFFSEditor.h>
-#include <ESPAsyncWebServer.h>
 
-AsyncWebServer server(80);
-AsyncWebSocket ws("/ws");
 
-const char* http_username = "admin";
-const char* http_password = "admin";
-
-void onWsEvent(AsyncWebSocket * server, AsyncWebSocketClient * client, AwsEventType type, void * arg, uint8_t *data, size_t len);
+/***********************************************************************************************************************
+ * Code ServerHttp
+ **********************************************************************************************************************/
 
 /**
  * Initializes the HTTP server part of the software
  */
 void serverHttpSetup() {
-  ws.onEvent(onWsEvent);
-  server.addHandler(&ws);
+  logMessage("ServerHttp", "serverHttpSetup", "MethodName", "");
   SPIFFS.begin();
-  server.addHandler(new SPIFFSEditor(http_username, http_password));
 
   server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain", serverHttpApiStatus());
@@ -36,26 +26,52 @@ void serverHttpSetup() {
   server.on("/api/log", HTTP_GET, [](AsyncWebServerRequest * request) {
     request->send(200, "text/plain", serverHttpApiLog());
   });
-  
-  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
 
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
+    request->send(SPIFFS, "/index.html");
+  });
+ 
+  server.serveStatic("/", SPIFFS, "/").setDefaultFile("index.html");
+  
   server.begin();
 }
 
 /**
- * Returns the current rig status
+ * Returns the current rig status as JSON
  */
 String serverHttpApiStatus() {
-  String content = "Status";
+  logMessage("ServerHttp", "serverHttpApiStatus", "MethodName", "");
+  String apiStatus = "";
+  if (nodes_online > 0) {
+    apiStatus += "{";
+    apiStatus += "\"rig_name\":\""+nameRig+"\",";
+    apiStatus += "\"rig_ip\":\""+wifiIp+"\",";
+    apiStatus += "\"user_name\":\""+nameUser+"\",";
+    apiStatus += "\"pool_address\":\""+serverPoolHost+":"+serverPoolPort+"\",";
+    apiStatus += "\"up_and_running_since\":\""+String(workingSeconds)+"\",";
+    apiStatus += "\"balance_first_value\":"+String(balanceFirstValue, 10)+",";
+    apiStatus += "\"balance_first_timestamp\":"+String(balanceFirstTimestamp)+",";
+    apiStatus += "\"nodes\":\""+String(nodes_sum)+"\",";
+    apiStatus += "\"nodes_online\":\""+String(nodes_online)+"\",";
+    apiStatus += "\"number_of_jobs\":\""+String(jobs_sum)+"\",";
+    apiStatus += "\"number_of_blocks\":\""+String(jobs_blocks)+"\",";
+    apiStatus += "\"jobs_good\":\""+String(jobs_good)+"\",";
+    apiStatus += "\"jobs_bad\":\""+String(jobs_bad)+"\",";
+    apiStatus += "\"core_details\":[";
 
-  return content;
+    // ToDo ...
+        
+    apiStatus += "]";
+    apiStatus += "}";
+  }
+  return apiStatus;
 }
 
 /**
  * Returns the log files
  */
 String serverHttpApiLog() {
+  logMessage("ServerHttp", "serverHttpApiLog", "MethodName", "");
   String content = "Log";
-
   return content;
 }
