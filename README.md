@@ -38,10 +38,10 @@ Because the ESP8266 works with a 3.3V signal and the Arduino UNOs need a 5V sign
 
 | Type | ESP8266 D1 Mini |  ESP8266 NodeMCU | - | Logic Level Converter | - | Arduino Nano |
 |:-----:| :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
-| GND | GND | GND | <-----> | GND - GND | <-----> | GND |
-| Voltage    | 3.3V | 3.3V | <-----> | 3V - 5V | <-----> | 5V |
-| SCL | D1 | D1 | <-----> | LV1 - HV1 | <-----> | A5 |
-| SDA | D2 | D2 | <-----> | LV2 - HV2 | <-----> | A4 |
+| GND | GND | GND | <-> | GND - GND | <-> | GND |
+| Voltage    | 3.3V | 3.3V | <-> | 3V - 5V | <-> | 5V |
+| SCL | D1 | D1 | <-> | LV1 - HV1 | <-> | A5 |
+| SDA | D2 | D2 | <-> | LV2 - HV2 | <-> | A4 |
 
 
 ### ESP8266 to SSD1306 display
