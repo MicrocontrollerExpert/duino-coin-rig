@@ -26,7 +26,7 @@ This will be the official software for the official Duino Coin Rig. This softwar
 - Arduino Mega
 
 ### Plannes additional MCs
-- ATtiny85![ESP8266-Arduino-Nano](https://user-images.githubusercontent.com/96885539/151670590-ba1899df-0d21-4c36-83e0-eede9c143f36.png)
+- ATtiny85
 
 
 
