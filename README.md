@@ -29,6 +29,7 @@ This will be the official software for the official Duino Coin Rig. This softwar
 - ATtiny85
 
 
+
 ## Component wiring
 
 ### ESP8266 to Arduino Nano
@@ -40,6 +41,7 @@ Because the ESP8266 works with a 3.3V signal and the Arduino UNOs need a 5V sign
 |:-----:| :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
 | GND | GND | GND | - | GND - GND | - | GND |
 | Voltage    | 3.3V | 3.3V | - | 3V - 5V | - | 5V |
+| Voltage    | 5V | VIN | - | - | - | 5V |
 | SCL | D1 | D1 | - | LV1 - HV1 | - | A5 |
 | SDA | D2 | D2 | - | LV2 - HV2 | - | A4 |
 
@@ -83,6 +85,9 @@ Depending on the SD card adapter, it must be connected to either the 3.3V or the
 | MISO | D6 | D6 | MISO |
 | MOSI | D7 | D7 | MOSI |
 | CS | D8 | D8 | CS |
+
+<img src="Images/Duino-Coin-Rig-ESP8266-Arduino-Nano.png" alt="Duino Coin Rig ESP8266 Arduino Nano" width="100%">
+
 
 ## Required Libraries
 You need these libraries to be able to compile the code.
