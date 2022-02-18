@@ -120,10 +120,10 @@ String          nameUser                                            = "";       
 String          nameRig                                             = "DuinoCoinRig";                             // Your name for this rig
 String          urlRequestPool                                      = "https://server.duinocoin.com/getPool";     // The url to request the pool server
 String          urlRequestUserBalance                               = "https://server.duinocoin.com/balances/";   // The url to request the balance
-String          serverPoolHost                                      = "192.168.2.16";                                         // The host of the pool server
-String          serverPoolPort                                      = "6000";                                         // The port to connect to
+String          serverPoolHost                                      = "";                                         // The host of the pool server
+String          serverPoolPort                                      = "";                                         // The port to connect to
 String          serverPoolName                                      = "Pool-Server";                              // The name of the pool server
-bool            loadConfigFromSdCard                                = true;                                      // With true loads config from SD card and overwrites this config here
+bool            loadConfigFromSdCard                                = true;                                       // With true loads config from SD card and overwrites this config here
 
 // Communication HTTPS
 HTTPClient      https;                                                                                            // The used instance of HTTPClient to request content from a HTTPS source (ClientHttps)
