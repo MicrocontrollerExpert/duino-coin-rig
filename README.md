@@ -8,6 +8,7 @@ This will be the official software for the official Duino Coin Rig. This softwar
   * [Plannes additional MCs](#plannes-additional-mcs)
 - [Component wiring](#component-wiring)
   * [ESP8266 to Arduino Nano](#esp8266-to-arduino-nano)
+  * [ESP8266 to ATTINY85](#esp8266-to-attiny85)
   * [ESP8266 to SSD1306 display](#esp8266-to-ssd1306-display)
   * [ESP8266 to SD card](#esp8266-to-sd-card)
     + [3.3V SD card adapter](#33v-sd-card-adapter)
@@ -38,7 +39,7 @@ This will be the official software for the official Duino Coin Rig. This softwar
 ### ESP8266 to Arduino Nano
 Tested with ESP8266 D1 Mini, but should theoretically work with ESP8266 NodeMCU as well.
 
-Because the ESP8266 works with a 3.3V signal and the Arduino UNOs need a 5V signal, you have to connect a logic level converter in between. This converts the 3.3V signals from the ESP8266 to 5V for the Arduino Nanos and the 5V signals from the Arduino Nanos to 3.3V for the ESP8266. Without this conversion, the components could not communicate with each other.
+Because the ESP8266 works with a 3.3V signal and the Arduino Nanos need a 5V signal, you have to connect a logic level converter in between. This converts the 3.3V signals from the ESP8266 to 5V for the Arduino Nanos and the 5V signals from the Arduino Nanos to 3.3V for the ESP8266. Without this conversion, the components could not communicate with each other.
 
 | Type | ESP8266 D1 Mini |  ESP8266 NodeMCU | - | Logic Level Converter | - | Arduino Nano |
 |:-----:| :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
@@ -47,6 +48,24 @@ Because the ESP8266 works with a 3.3V signal and the Arduino UNOs need a 5V sign
 | Voltage    | 5V | VIN | - | - | - | 5V |
 | SCL | D1 | D1 | - | LV1 - HV1 | - | A5 |
 | SDA | D2 | D2 | - | LV2 - HV2 | - | A4 |
+
+<img src="Images/Duino-Coin-Rig-ESP8266-Arduino-Nano.png" alt="Duino Coin Rig ESP8266 Arduino Nano" width="100%">
+
+
+### ESP8266 to ATTINY85
+Tested with ESP8266 D1 Mini, but should theoretically work with ESP8266 NodeMCU as well.
+
+Because the ESP8266 works with a 3.3V signal and the ATTINYs need a 5V signal, you have to connect a logic level converter in between. This converts the 3.3V signals from the ESP8266 to 5V for the ATTINYs and the 5V signals from the ATTINYs to 3.3V for the ESP8266. Without this conversion, the components could not communicate with each other.
+
+| Type | ESP8266 D1 Mini |  ESP8266 NodeMCU | - | Logic Level Converter | - | ATTINY85 |
+|:-----:| :-----: | :-----: | :-----: | :-----: | :-----: | :-----: |
+| GND | GND | GND | - | GND - GND | - | PIN4 |
+| Voltage    | 3.3V | 3.3V | - | 3V - 5V | - | PIN8 |
+| Voltage    | 5V | VIN | - | - | - | PIN8 |
+| SCL | D1 | D1 | - | LV1 - HV1 | - | PIN7 |
+| SDA | D2 | D2 | - | LV2 - HV2 | - | PIN6 |
+
+<img src="Images/Duino-Coin-Rig-ESP8266-ATTINY85.png" alt="Duino Coin Rig ESP8266 ATTINY85" width="100%">
 
 
 ### ESP8266 to SSD1306 display
@@ -88,8 +107,6 @@ Depending on the SD card adapter, it must be connected to either the 3.3V or the
 | MISO | D6 | D6 | MISO |
 | MOSI | D7 | D7 | MOSI |
 | CS | D8 | D8 | CS |
-
-<img src="Images/Duino-Coin-Rig-ESP8266-Arduino-Nano.png" alt="Duino Coin Rig ESP8266 Arduino Nano" width="100%">
 
 
 ## Required Libraries
