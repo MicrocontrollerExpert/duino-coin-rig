@@ -38,7 +38,7 @@ void slavesScan() {
   setStateMaster(MASTER_STATE_SCANNING);
   logMessage("Slaves", "slavesScan", "MethodDetail", "Start scanning for slaves");
   int counter = 0;
-  for (byte id=SLAVE_ID_MIN ; id<=SLAVE_ID_MAX ; id++) {
+  for (byte id=SLAVE_ID_MIN ; id<SLAVE_ID_MAX ; id++) {
     if (slaveExists(id)) {
       logMessage("Slaves", "slavesScan", "MethodDetail", "Slave found with ID " + String(id));
       String text = slaveRequestLn(id);
@@ -87,7 +87,7 @@ void slaveSendMessage(byte id, String message) {
 void slavesSendMessage(String message) {
   logMessage("Slaves", "slavesSendMessage", "MethodName", "");
   logMessage("Slaves", "slavesSendMessage", "MethodDetail", "Send message to all slaves");
-  for (byte id=SLAVE_ID_MIN ; id<=SLAVE_ID_MAX ; id++) {
+  for (byte id=SLAVE_ID_MIN ; id<SLAVE_ID_MAX ; id++) {
     if (slaveExists(id)) {
       logMessage("Slaves", "slavesSendMessage", "MethodDetail", "Send message to ID " + String(id) + " -> " + message);
       slaveSendText(id, message);
@@ -103,9 +103,9 @@ void slavesSendMessage(String message) {
  * @param String hashNextBlock The hash for the next block
  * @param int difficulty The difficulty
  */
-void slaveSendNextJob(byte id, String resultType, String lastBlockHash, String nextBlockHash, String difficulty) {
+void slaveSendNextJob(byte id, String lastBlockHash, String nextBlockHash, String difficulty) {
   logMessage("Slaves", "slaveSendNextJob", "MethodName", "");
-  String job = resultType + ":" + lastBlockHash + ":" + nextBlockHash + ":" + difficulty;
+  String job = lastBlockHash + "," + nextBlockHash + "," + difficulty;
   slaveSendLn(id, job);
 }
 

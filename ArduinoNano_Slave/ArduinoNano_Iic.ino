@@ -1,27 +1,86 @@
 /*
  * Project: DuinoCoinRig
  * File:    ArduinoNano_Iic
- * Version: 0.1
+ * Version: 0.2
  * Purpose: Communication with the master
  * Author:  Frank Niggemann
  */
 
-#include <Wire.h>
-#include <StreamString.h>
-#include <DuinoCoin.h>
 
-#define WIRE_SDA 4              // D2 - A4 - GPIO4
-#define WIRE_SCL 5              // D1 - A5 - GPIO5
-#define WIRE_CLOCK 100000       // The speed
 
-#define IIC_ID_MIN 1            // The first possible address
-#define IIC_ID_MAX 127          // The last possible address
+/***********************************************************************************************************************
+ * Code Iic
+ **********************************************************************************************************************/
 
-#define CHAR_REQUEST_SHORT 'S'  // The byte for the request for a short status
-#define CHAR_REQUEST_FULL 'F'   // The byte for the request for a full status
+void iicSetup() {
+  pinMode(PIN_IIC_SDA, INPUT_PULLUP);
+  pinMode(PIN_IIC_SCL, INPUT_PULLUP);
+  
+  Wire.begin();
+  for (int id=IIC_ID_MIN; id<IIC_ID_MAX; id++) {
+    Wire.beginTransmission(id);
+    int result = Wire.endTransmission();
+    if (result != 0) {
+      iic_id = id;
+      break;
+    }
+  }
+  Wire.end();
+  logMessage("Address ID: "+String(iic_id));
+  Wire.begin(iic_id);
+  Wire.onReceive(iicHandlerReceive);
+  Wire.onRequest(iicHandlerRequest);  
+  ducoId = getDucoId();
+  logMessage("DUCO ID: "+ducoId);
+  ledBlink(PIN_LED_ADDRESS, 250, 250);
+  ledBlink(PIN_LED_ADDRESS, 250, 250);
+  setState(SLAVE_STATE_FREE);
+}
 
+
+void iicHandlerReceive(int numBytes) {
+  if (numBytes == 0)
+  {
+    return;
+  }
+  while (Wire.available()) {
+    char c = Wire.read();
+    bufferReceive.write(c);
+  }
+}
+
+void iicHandlerRequest() {
+  char c = '\n';
+  if (bufferRequest.available() > 0 && bufferRequest.indexOf('\n') != -1) {
+    c = bufferRequest.read();
+  }
+  Wire.write(c);
+}
+
+void iicWorker() {
+  if (bufferReceive.available() > 0 && bufferReceive.indexOf('\n') != -1) {
+
+    setState(SLAVE_STATE_WORKING);
+    logMessage("Request: "+String(bufferReceive));
+
+    String lastblockhash = bufferReceive.readStringUntil(',');
+    String newblockhash = bufferReceive.readStringUntil(',');
+    unsigned int difficulty = bufferReceive.readStringUntil('\n').toInt();
+    unsigned long startTime = micros();
+    unsigned int ducos1result = 0;
+    if (difficulty < 655) ducos1result = Ducos1a.work(lastblockhash, newblockhash, difficulty);
+    unsigned long endTime = micros();
+    unsigned long elapsedTime = endTime - startTime;
+    while (bufferRequest.available()) bufferRequest.read();
+    bufferRequest.print(String(ducos1result) + "," + String(elapsedTime) + "," + ducoId + "\n");
+
+    setState(SLAVE_STATE_FREE);
+    logMessage("Result: "+String(ducos1result) + "," + String(elapsedTime) + "," + ducoId);
+  }
+}
+
+/*
 byte iic_id = 0;
-char result_type = CHAR_REQUEST_FULL;
 StreamString bufferReceive;
 String stringReceive = "";
 StreamString bufferRequest;
@@ -71,19 +130,15 @@ void iicHandlerReceive(int numBytes) {
 void iicEvaluateBufferReceive() {
   if (bufferReceive.available() > 0 && bufferReceive.indexOf('\n') != -1) {
     if (bufferReceive.length() < 10) {
-      String result_type_string = bufferReceive.readStringUntil('\n');
-      result_type = result_type_string.charAt(0);
-      logMessage("Receive just result_type: "+String(result_type));
+      
     } else {
-      String message = bufferReceive.readStringUntil(':');
-      lastBlockHash = bufferReceive.readStringUntil(':');
-      nextBlockHash = bufferReceive.readStringUntil(':');
+      lastBlockHash = bufferReceive.readStringUntil(',');
+      nextBlockHash = bufferReceive.readStringUntil(',');
       unsigned int difficulty = bufferReceive.readStringUntil('\n').toInt();
-      logMessage("Receive message: "+String(message));
       logMessage("Receive lastBlockHash: "+lastBlockHash);
       logMessage("Receive nextBlockHash: "+nextBlockHash);
       logMessage("Receive difficulty: "+String(difficulty));
-      if (result_type!="" && lastBlockHash!="" && nextBlockHash!="") {
+      if (lastBlockHash!="" && nextBlockHash!="") {
         setState(SLAVE_STATE_WORKING);
         digitalWrite(PIN_LED_WORKING, HIGH);
         microtimeStart = micros();
@@ -123,8 +178,9 @@ void iicSetBufferRequestStringEmpty() {
 
 void iicSetBufferRequestStringJobResult() {
   while (bufferRequest.available()) bufferRequest.read();
-  String request = lastBlockHash+":"+nextBlockHash+":"+String(ducos1aResult)+":"+ducoId+":"+String(microtimeDifference)+"\n";
+  String request = String(ducos1aResult)+":"+String(microtimeDifference)+":"+ducoId+"\n";
   logMessage(request);
   bufferRequest.print(request);
   setState(SLAVE_STATE_RESULT_SENT);
 }
+*/

@@ -17,7 +17,7 @@
  */
 void clientHttpsSetup() {
   logMessage("Master", "clientHttpsSetup", "MethodName", "");
-  https.setTimeout(10000);
+  https.setTimeout(30000);
 }
 
 /**
@@ -78,7 +78,8 @@ void clientHttpsRequestPoolConfiguration() {
     logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodDetail", "Updated pool configuration to host " + serverPoolHost + " and port " + serverPoolPort + " with name " + serverPoolName);
     serverPoolError = "";
   } else {
-    logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodDetail", "Connection failed!");
+    // ToDo: Create fallback solution!
+    logMessage("ClientHttps", "clientHttpsRequestPoolConfiguration", "MethodDetail", "Connection failed! Use fallback configuration!");
   }
 }
 

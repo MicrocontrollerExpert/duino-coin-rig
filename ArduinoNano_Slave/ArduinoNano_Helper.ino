@@ -6,16 +6,11 @@
  * Author:  Frank Niggemann
  */
 
-#include <ArduinoUniqueID.h>
 
-int getRandomByte() {
-  int result = 0;
-  for (int pos=0 ; pos<8 ; pos++) {
-    delay(2);
-    bitWrite(result, pos, bitRead(analogRead(PIN_ANALOG_IN), 0));
-  }
-  return result;
-}
+
+/***********************************************************************************************************************
+ * Code Helper
+ **********************************************************************************************************************/
 
 String getDucoId() {
   String ID = "DUCOID"+getPseudoUniqueIdString();
@@ -83,4 +78,43 @@ void ledBlink(int pin, int msOn, int msOff) {
   delay(msOn);
   digitalWrite(pin, LOW);
   delay(msOff);
+}
+
+void ledSet(bool ledAddress, bool ledFree, bool ledWorking, bool ledReady) {
+  if (PIN_LED_ADDRESS) {
+    if (ledAddress) {
+      digitalWrite(PIN_LED_ADDRESS, HIGH);
+      logMessage("PIN_LED_ADDRESS: ON");
+    } else {
+      digitalWrite(PIN_LED_ADDRESS, LOW);
+      logMessage("PIN_LED_ADDRESS: OFF");
+    }
+  }
+  if (PIN_LED_FREE) {
+    if (ledFree) {
+      digitalWrite(PIN_LED_FREE, HIGH);
+      logMessage("PIN_LED_FREE: ON");
+    } else {
+      digitalWrite(PIN_LED_FREE, LOW);
+      logMessage("PIN_LED_FREE: OFF");
+    }
+  }
+  if (PIN_LED_WORKING) {
+    if (ledWorking) {
+      digitalWrite(PIN_LED_WORKING, HIGH);
+      logMessage("PIN_LED_WORKING: ON");
+    } else {
+      digitalWrite(PIN_LED_WORKING, LOW);
+      logMessage("PIN_LED_WORKING: OFF");
+    }
+  }
+  if (PIN_LED_READY) {
+    if (ledReady) {
+      digitalWrite(PIN_LED_READY, HIGH);
+      logMessage("PIN_LED_READY: ON");
+    } else {
+      digitalWrite(PIN_LED_READY, LOW);
+      logMessage("PIN_LED_READY: OFF");
+    }
+  }
 }

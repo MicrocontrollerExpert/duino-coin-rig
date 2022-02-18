@@ -91,7 +91,7 @@
 
 // Slaves
 #define         SLAVE_ID_MIN                                          1                                           // The first possible address for a slave
-#define         SLAVE_ID_MAX                                          30                                          // The last possible address for a slave
+#define         SLAVE_ID_MAX                                          55                                          // The last possible address for a slave
 #define         WIRE_PIN_SDA                                          D2                                          // The communication pin for SDA (D2 on ESP8266)
 #define         WIRE_PIN_SCL                                          D1                                          // The communication pin for SCL (D1 on ESP8266)
 #define         WIRE_CLOCK                                            100000                                      // The I2C communication frequency
@@ -111,8 +111,8 @@
 
 // Configuration
 String          softwareName                                        = "DuinoCoinRig";                             // The name of this software          
-String          softwareVersion                                     = "0.2";                                      // The version of this software
-String          minerName                                           = "AVR I2C v2.7.4";                           // The name of the miner
+String          softwareVersion                                     = "0.3";                                      // The version of this software
+String          minerName                                           = "AVR I2C 3.0";                              // The name of the miner
 String          wifiSsid                                            = "";                                         // Your WiFi SSID
 String          wifiPassword                                        = "";                                         // Your WiFi password
 String          wifiIp                                              = "";                                         // Your WiFi IP
@@ -120,10 +120,10 @@ String          nameUser                                            = "";       
 String          nameRig                                             = "DuinoCoinRig";                             // Your name for this rig
 String          urlRequestPool                                      = "https://server.duinocoin.com/getPool";     // The url to request the pool server
 String          urlRequestUserBalance                               = "https://server.duinocoin.com/balances/";   // The url to request the balance
-String          serverPoolHost                                      = "";                                         // The host of the pool server
-String          serverPoolPort                                      = "";                                         // The port to connect to
+String          serverPoolHost                                      = "192.168.2.16";                                         // The host of the pool server
+String          serverPoolPort                                      = "6000";                                         // The port to connect to
 String          serverPoolName                                      = "Pool-Server";                              // The name of the pool server
-bool            loadConfigFromSdCard                                = false;                                      // With true loads config from SD card and overwrites this config here
+bool            loadConfigFromSdCard                                = true;                                      // With true loads config from SD card and overwrites this config here
 
 // Communication HTTPS
 HTTPClient      https;                                                                                            // The used instance of HTTPClient to request content from a HTTPS source (ClientHttps)
@@ -367,7 +367,7 @@ void loop() {
     timestampUpdateLast = millis();
     workingSeconds = timestampNow - timestampFirst;
     logMessage("Master", "setStateMaster", "MethodDetail", "workingSeconds = " + String(timestampNow) + " - " + String(timestampFirst) + " = " + String(workingSeconds));
-    if (serverPoolHost=="" && serverPoolPort=="") {
+    if (serverPoolHost=="" && serverPoolPort=="" && nodes_online==0) {
       clientHttpsRequestPoolConfiguration();
     }
   } else {

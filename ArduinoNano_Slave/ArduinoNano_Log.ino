@@ -6,8 +6,11 @@
  * Author:  Frank Niggemann
  */
 
-bool logSerial = true;
-bool logI2C = false;
+
+
+/***********************************************************************************************************************
+ * Code Log
+ **********************************************************************************************************************/
 
 /**
  * Initializes the log part of the software
@@ -26,9 +29,6 @@ void logMessage(String message) {
   if (logSerial) {
     logMessageSerial(message);
   }
-  if (logI2C) {
-    logMessageI2C(message);
-  }
 }
 
 /**
@@ -36,11 +36,4 @@ void logMessage(String message) {
  */
 void logMessageSerial(String message) {
   Serial.println(message);
-}
-
-/**
- * Writes the log message to the I2C bus
- */
-void logMessageI2C(String message) {
-  // Maybe later ...
 }

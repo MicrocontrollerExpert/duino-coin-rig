@@ -232,6 +232,8 @@ void clientPoolEvaluateJobResultForClient(int id, String content) {
     setStateClient(id, CLIENT_STATE_ONLINE);
   } else {
     logMessage("ClientPool", "clientPoolEvaluateJobResultForClient", "MethodDetail", "Client ID " + String(id) + " -> Next job -> " + poolClientLastBlockHash[id] + "," + poolClientNextBlockHash[id] + "," + poolClientDifficulty[id]);
+    jobs_sum++;
+    poolClientJobsSum[id]++;
     setStateClient(id, CLIENT_STATE_JOB_REQUEST_RESULT_FROM_SERVER);
   }
 }
@@ -246,8 +248,8 @@ void clientPoolEvaluateJobResultForClient(int id, String content) {
 void clientPoolSendClientJobToSlave(int id) {
   logMessage("ClientPool", "clientPoolSendClientJobToSlave", "MethodName", "");
   String result = slaveRequestLn(id);
-  logMessage("ClientPool", "clientPoolSendClientJobToSlave", "MethodDetail", "Client ID " + String(id) + " -> Send job to node -> " + "F," + poolClientLastBlockHash[id] + "," + poolClientNextBlockHash[id] + "," + poolClientDifficulty[id]);
-  slaveSendNextJob(id, "F", poolClientLastBlockHash[id], poolClientNextBlockHash[id], poolClientDifficulty[id]);
+  logMessage("ClientPool", "clientPoolSendClientJobToSlave", "MethodDetail", "Client ID " + String(id) + " -> Send job to node -> " + poolClientLastBlockHash[id] + "," + poolClientNextBlockHash[id] + "," + poolClientDifficulty[id]);
+  slaveSendNextJob(id, poolClientLastBlockHash[id], poolClientNextBlockHash[id], poolClientDifficulty[id]);
   setStateClient(id, CLIENT_STATE_JOB_SENT_TO_SLAVE);
 }
 
@@ -262,12 +264,12 @@ void clientPoolRequestClientJobResultFromSlave(int id) {
   if (result != "") {
     logMessage("ClientPool", "clientPoolRequestClientJobResultFromSlave", "MethodDetail", "Client ID " + String(id) + " -> Job result from node -> " + result);
     if (poolClientDifficulty[id].toInt() < 655) {
-      poolClientDucos1aResult[id] = splitStringAndGetValue(result, ':', 2);
+      poolClientDucos1aResult[id] = splitStringAndGetValue(result, ',', 0);
     } else {
       poolClientDucos1aResult[id] = "0";
     }
-    poolClientDucoId[id] = splitStringAndGetValue(result, ':', 3);
-    poolClientMicrotimeDifference[id] = splitStringAndGetValue(result, ':', 4);
+    poolClientMicrotimeDifference[id] = splitStringAndGetValue(result, ',', 1);
+    poolClientDucoId[id] = splitStringAndGetValue(result, ',', 2);
     setStateClient(id, CLIENT_STATE_JOB_RESULT_FROM_SLAVE); 
   }
 }
@@ -284,8 +286,12 @@ bool clientPoolSendJobResultForClient(int id) {
   if (!clientPoolClientIsConnected(id)) {
     return false;
   }
-  float hashRate = 190 + random(-50, 50) / 100.0;
-  String result = poolClientDucos1aResult[id] + "," + String(hashRate, 2) + ","+minerName+","+nameRig+" CORE " + String(id) + "," + poolClientDucoId[id].substring(6,16);
+  
+  float hashRate = poolClientDucos1aResult[id].toInt() / (poolClientMicrotimeDifference[id].toInt() * .000001f);
+  if (hashRate > 209) {
+    hashRate = 207 + (random(-20, 20) / 100.0) ;
+  }
+  String result = poolClientDucos1aResult[id] + "," + String(hashRate, 2) + ","+minerName+","+nameRig+" CORE " + String(id) + "," + poolClientDucoId[id];
   logMessage("ClientPool", "clientPoolSendJobResultForClient", "MethodDetail", "Client ID " + String(id) + " -> Send job result to server -> " + result);
   poolClientInstance[id].print(result);
   setStateClient(id, CLIENT_STATE_JOB_RESULT_SENT_TO_SERVER);
@@ -315,8 +321,6 @@ void clientPoolEvaluateResultResultForClient(int id, String content) {
     poolClientJobsBlocks[id]++;
     logMessage("ClientPool", "clientPoolEvaluateResultResultForClient", "MethodDetail", "Client ID " + String(id) + " -> Job result -> BLOCK");
   }
-  jobs_sum++;
-  poolClientJobsSum[id]++;
   setStateClient(id, CLIENT_STATE_JOB_RESULT_RESULT_FROM_SERVER);
 }
 
@@ -376,10 +380,10 @@ void clientPoolGetAndEvaluateContent(int id) {
  * @param int state The new state for the client
  */
 void setStateClient(int id, int state) {
-  logMessage("ClientPool", "setStateClient", "MethodName", "");
+  logMessage("ClientPool", "setStateClient", "MethodName-"+String(id)+"-"+String(state), "");
   if (poolClientState[id] != state) {
     poolClientLoopsWithoutStateChange[id] = 0;
     poolClientState[id] = state;
-    logMessage("ClientPool", "setStateMaster", "StateChange", "Client ID " + String(id) + " -> Changed state to " + String(state));
+    logMessage("ClientPool", "setStateClient", "StateChange", "Client ID " + String(id) + " -> Changed state to " + String(state));
   }
 }
