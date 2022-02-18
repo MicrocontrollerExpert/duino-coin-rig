@@ -1,7 +1,7 @@
 # duino-coin-rig
 This will be the official software for the official Duino Coin Rig. This software is currently still in alpha status and is being further developed.
 
-#### Table of contents
+### Table of contents
 - [Hardware](#hardware)
   * [Currently supported hardware](#currently-supported-hardware)
   * [Planned additional SBCs](#planned-additional-sbcs)
@@ -12,6 +12,9 @@ This will be the official software for the official Duino Coin Rig. This softwar
   * [ESP8266 to SD card](#esp8266-to-sd-card)
     + [3.3V SD card adapter](#33v-sd-card-adapter)
     + [5V SD card adapter](#5v-sd-card-adapter)
+
+### Screenshot Webfrontend
+<img src="Images/Screenshot-Webfrontend.png" alt="Duino Coin Rig Screenshot Webfrontend" width="100%">
 
 
 ## Hardware
