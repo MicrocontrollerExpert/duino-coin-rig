@@ -8,6 +8,7 @@ This will be the official software for the official Duino Coin Rig. This softwar
   * [Plannes additional MCs](#plannes-additional-mcs)
 - [Component wiring](#component-wiring)
   * [ESP8266 to Arduino Nano](#esp8266-to-arduino-nano)
+  * [ESP8266 to ATTINY85](#esp8266-to-attiny85)
   * [ESP8266 to SSD1306 display](#esp8266-to-ssd1306-display)
   * [ESP8266 to SD card](#esp8266-to-sd-card)
     + [3.3V SD card adapter](#33v-sd-card-adapter)
