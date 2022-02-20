@@ -63,7 +63,9 @@ Because the ESP8266 works with a 3.3V signal and the ATTINYs need a 5V signal, y
 | Voltage    | 3.3V | 3.3V | - | 3V - 5V | - | PIN8 |
 | Voltage    | 5V | VIN | - | - | - | PIN8 |
 | SCL | D1 | D1 | - | LV1 - HV1 | - | PIN7 |
-| SDA | D2 | D2 | - | LV2 - HV2 | - | PIN6 |
+| SDA | D2 | D2 | - | LV2 - HV2 | - | PIN5 |
+| G-LED | - | - | - | - | - | PIN3 |
+| R-LED | - | - | - | - | - | PIN6 |
 
 <img src="Images/Duino-Coin-Rig-ESP8266-ATTINY85.png" alt="Duino Coin Rig ESP8266 ATTINY85" width="100%">
 
