@@ -114,18 +114,18 @@ Depending on the SD card adapter, it must be connected to either the 3.3V or the
 ## Required Libraries
 You need these libraries to be able to compile the code.
 
-- Arduino
-- ArduinoJson
-- ESP8266HTTPClient
-- ESP8266mDNS
-- ESP8266WiFi
-- ESPAsyncTCP
-- ESPAsyncWebServer
-- NTPClient
-- SdFat
+- Arduino 
+- ArduinoJson (https://github.com/bblanchon/ArduinoJson)
+- ESP8266HTTPClient (https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266HTTPClient)
+- ESP8266mDNS (https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266mDNS)
+- ESP8266WiFi (https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi)
+- ESPAsyncTCP (https://github.com/me-no-dev/ESPAsyncTCP)
+- ESPAsyncWebServer (https://github.com/me-no-dev/ESPAsyncWebServer)
+- NTPClient (https://github.com/arduino-libraries/NTPClient)
+- SdFat (https://github.com/greiman/SdFat)
 - SPIFFSEditor
 - SSD1306Wire
-- WiFiClientSecureBearSSL
+- WiFiClientSecureBearSSL (https://github.com/esp8266/Arduino/tree/master/libraries/ESP8266WiFi/src)
 - WiFiUdp
 - Wire
 
