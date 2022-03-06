@@ -1,5 +1,5 @@
 # duino-coin-rig
-This will be the official software for the official Duino Coin Rig. This software is currently still in alpha status and is being further developed.
+The planned cooperation with the Duino Coin team failed and therefore this will not be an official code for an official rig. It is not yet clear how this project will develop further!
 
 ### Table of contents
 - [Hardware](#hardware)
